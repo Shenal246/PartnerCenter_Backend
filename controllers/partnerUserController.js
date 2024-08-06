@@ -1,13 +1,12 @@
 const bcrypt = require('bcrypt');
 const db = require('../config/database');
 const { errorHandler } = require('../middlewares/errorHandler');
+const jwt = require('jsonwebtoken');
 
 // Compare password with the stored hashed password
 async function comparePassword(password, hashedPassword) {
     return await bcrypt.compare(password, hashedPassword);
 }
-
-const jwt = require('jsonwebtoken');
 
 exports.login = async (req, res) => {
     const { username, password } = req.body;
@@ -50,6 +49,7 @@ exports.login = async (req, res) => {
         errorHandler(err, req, res);
     }
 };
+
 
 // Logout function
 exports.logout = (req, res) => {
