@@ -61,7 +61,7 @@ exports.login = async (req, res) => {
 
     } catch (err) {
         console.error('Error during login:', err);
-        errorHandler(err, req, res);
+        // errorHandler(err, req, res);
     }
 };
 
@@ -80,13 +80,13 @@ exports.changePassword = async (req, res) => {
 
         await db.promise().query(
             'INSERT INTO partnerlogs (timestamp, action, partner_user_id) VALUES (NOW(), ?, ?)',
-            ['First Login Password Change Required', user.id]
+            ['First Login Password Change Required', userId]
         );
 
         res.status(200).json({ message: 'Password changed successfully' });
     } catch (err) {
         console.error('Error changing password:', err);
-        errorHandler(err, req, res);
+        // errorHandler(err, req, res);
     }
 };
 
