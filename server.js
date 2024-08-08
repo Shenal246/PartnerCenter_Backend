@@ -8,6 +8,7 @@ const productRoutes = require('./routes/productRoutes');
 const partnerRoutes = require('./routes/becomePartnerRoutes');
 const commonRoutes = require('./routes/commonRoutes');
 const videoRoutes = require('./routes/videoRoutes');
+const staffRoutes = require('./routes/staffRoutes');
 const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
 
@@ -35,6 +36,7 @@ app.use('/api/products', productRoutes);
 app.use(partnerRoutes);
 app.use(commonRoutes);
 app.use(videoRoutes);
+app.use(staffRoutes);
 
 // Error handler middleware
 // app.use(errorHandler);
