@@ -14,6 +14,9 @@ router.post('/change-password', partnerUserController.changePassword);
 router.post('/stafflogin', staffUserController.login);
 router.post('/change-password-staff', staffUserController.changePassword);
 
+//Staff logout route
+router.post('/stafflogout', staffUserController.logout);
+
 // Logout route
 router.post('/logout', partnerUserController.logout);
 
@@ -21,5 +24,8 @@ router.post('/logout', partnerUserController.logout);
 router.get('/protected', isAuthenticated, (req, res) => {
   res.status(200).json({ message: 'Welcome to the protected route!' });
 });
+
+//Verifytoken
+router.get('/verifytoken', authMiddlewaree.verifyToken);
 
 module.exports = router;

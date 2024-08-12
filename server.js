@@ -1,33 +1,36 @@
 // server.js
 const express = require('express');
 const bodyParser = require('body-parser');
-const errorHandler = require('./middlewares/errorHandler');
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const productRoutes = require('./routes/productRoutes');
-const partnerRoutes = require('./routes/becomePartnerRoutes');
-const commonRoutes = require('./routes/commonRoutes');
-const videoRoutes = require('./routes/videoRoutes');
-const staffRoutes = require('./routes/staffRoutes');
-const sessionConfig = require('./config/sessionConfig');
+// const errorHandler = require('./middlewares/errorHandler');
+const authRoutes = require('./routes/authRoutes.js');
+const userRoutes = require('./routes/userRoutes.js');
+const productRoutes = require('./routes/productRoutes.js');
+const partnerRoutes = require('./routes/becomePartnerRoutes.js');
+const commonRoutes = require('./routes/commonRoutes.js');
+const videoRoutes = require('./routes/videoRoutes.js');
+const staffRoutes = require('./routes/staffRoutes.js');
+// const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
+const cookieParser = require('cookie-parser')
 
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(cookieParser());
+
 // Use CORS middleware
 app.use(cors({
-  // origin: 'http://localhost:3001', // Allow only requests from this origin
-  // credentials: true // Allow cookies to be sent with requests
+  origin: 'http://localhost:3001', // Allow only requests from this origin
+  credentials: true // Allow cookies to be sent with requests
 }));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Session configuration
-app.use(sessionConfig);
+// app.use(sessionConfig);
 
 // Routes
 app.use(authRoutes);

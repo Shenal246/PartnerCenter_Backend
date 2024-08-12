@@ -24,7 +24,7 @@ exports.login = async (req, res) => {
 
         const user = rows[0];
 
-        const match = await comparePassword(password, user.password);
+        const match = await bcrypt.compare(password, user.password);
         if (!match) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
@@ -43,11 +43,6 @@ exports.login = async (req, res) => {
             return res.status(200).json({ message: 'Password change required', firstLogin: true, tempToken });
         }
 
-        req.session.user = {
-            id: user.id,
-            username
-        };
-
         await db.promise().query(
             'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
             ['Staff Login', user.id]
@@ -55,12 +50,22 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ id: user.id, username }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+        res.status(200)
+            .cookie('token', token,
+                {
+                    httpOnly: true,
+                    secure: false, // Set to true if using HTTPS
+                    sameSite: 'Lax', // Necessary for cross-site requests
+                    // expires: new Date(new Date().getTime() + 60 * 60 * 1000),
+                    maxAge: 172800000,
+                })
+        // .send("Cookie being Initialized, Login successful");
 
-        res.status(200).json({ message: 'Login successful', token });
+        res.status(200).json({ message: 'Login successful', user: { id: user.id, email: user.email }, });
 
     } catch (err) {
         console.error('Error during login:', err);
+        res.status(500).json({ message: 'Server error' });
         // errorHandler(err, req, res);
     }
 };
@@ -92,11 +97,7 @@ exports.changePassword = async (req, res) => {
 
 // Logout function
 exports.logout = (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            return res.status(500).json({ message: 'Logout failed' });
-        }
-        res.clearCookie('connect.sid');
-        res.status(200).json({ message: 'Logout successful' });
-    });
+
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Logout successful' });
 };
