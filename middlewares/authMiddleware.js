@@ -19,7 +19,6 @@ exports.verifyToken = (req, res, next) => {
     const decoded = jwtUtils.verifyToken(token);
     req.user = decoded; // Attach decoded token data to req.user
     res.status(200).json("Token Verified");
-    console.log("Token Verified");
 
     next(); // Proceed to the next middleware/route handler
   } catch (err) {

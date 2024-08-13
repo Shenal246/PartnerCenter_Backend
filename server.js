@@ -22,7 +22,7 @@ app.use(cookieParser());
 
 // Use CORS middleware
 app.use(cors({
-  origin: 'http://localhost:3001', // Allow only requests from this origin
+  origin: 'http://192.168.13.218:3001', // Allow only requests from this origin
   credentials: true // Allow cookies to be sent with requests
 }));
 
