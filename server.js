@@ -35,7 +35,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Routes
 app.use(authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/products', productRoutes);
+app.use(productRoutes);
 app.use(partnerRoutes);
 app.use(commonRoutes);
 app.use(videoRoutes);
