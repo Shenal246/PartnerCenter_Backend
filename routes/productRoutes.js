@@ -14,7 +14,16 @@ router.put('/update-category-srilanka/:id', authMiddleware.verifyTokenforFunctio
 
 // For Features
 router.post('/add-features-srilanka', authMiddleware.verifyTokenforFunctions, productController.addFeature);
-router.get('/get-featuresforcat-srilanka', authMiddleware.verifyTokenforFunctions, productController.getFeatures);
+router.get('/get-features-srilanka', authMiddleware.verifyTokenforFunctions, productController.getFeatures);
+router.post('/get-featuresforcat-srilanka', authMiddleware.verifyTokenforFunctions, productController.getFeaturestoCat);
 // router.post('/get-featuresforcat-srilanka',productController.getFeatures);
+
+// For Products
+router.get('/get-PM-srilanka', authMiddleware.verifyTokenforFunctions, productController.getProductManagers);
+router.post('/add-product', authMiddleware.verifyTokenforFunctions, productController.addProduct);
+router.get('/get-products', productController.getProductDetails);
+
+// For status
+router.get('/get-status', authMiddleware.verifyTokenforFunctions, productController.getStatus);
 
 module.exports = router;

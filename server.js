@@ -9,6 +9,7 @@ const partnerRoutes = require('./routes/becomePartnerRoutes.js');
 const commonRoutes = require('./routes/commonRoutes.js');
 const videoRoutes = require('./routes/videoRoutes.js');
 const staffRoutes = require('./routes/staffRoutes.js');
+const vendorRoutes = require('./routes/vendorRoutes.js');
 // const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
 const cookieParser = require('cookie-parser')
@@ -40,6 +41,7 @@ app.use(partnerRoutes);
 app.use(commonRoutes);
 app.use(videoRoutes);
 app.use(staffRoutes);
+app.use(vendorRoutes);
 
 // Error handler middleware
 // app.use(errorHandler);
