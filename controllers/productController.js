@@ -239,7 +239,7 @@ exports.getProductDetails = async (req, res, next) => {
        FROM product p
        JOIN category c ON p.category_id = c.id
        JOIN vendor v ON p.vendor_id = v.id
-       JOIN product_manager pm ON p.pm_id = pm.id
+       JOIN staff pm ON p.pm_id = pm.id
        JOIN status s ON p.status_id = s.id
        WHERE p.id = ?`,
       [productId]
