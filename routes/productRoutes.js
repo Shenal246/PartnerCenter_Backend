@@ -19,9 +19,10 @@ router.post('/get-featuresforcat-srilanka', authMiddleware.verifyTokenforFunctio
 // router.post('/get-featuresforcat-srilanka',productController.getFeatures);
 
 // For Products
-router.get('/get-PM-srilanka', authMiddleware.verifyTokenforFunctions, productController.getProductManagers);
+router.get('/get-PM-srilanka', authMiddleware.verifyTokenforPartnerFunctions, productController.getProductManagers);
+
 router.post('/add-product', authMiddleware.verifyTokenforFunctions, productController.addProduct);
-router.get('/get-products/:id', productController.getProductDetails);
+router.get('/get-products/:id', authMiddleware.verifyTokenforFunctions, productController.getProductDetails);
 
 // For status
 router.get('/get-status', authMiddleware.verifyTokenforFunctions, productController.getStatus);

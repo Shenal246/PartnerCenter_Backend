@@ -1,6 +1,7 @@
 // controllers/productController.js
 const db = require('../config/database');
 const authMiddleware = require('../middlewares/authMiddleware');
+const multer = require('multer');
 
 exports.listProducts = async (req, res, next) => {
   try {
@@ -151,12 +152,14 @@ exports.getProductManagers = async (req, res, next) => {
   }
 };
 
-// Add Products
+
 exports.addProduct = async (req, res, next) => {
+  console.log('rEQ bODY:', req.body);
+
   const productData = req.body;
 
   if (!productData) {
-    return res.status(400).json({ message: 'Product array is required' });
+    return res.status(400).json({ message: 'Product data is required' });
   }
 
   const productname = productData.name;
@@ -167,33 +170,33 @@ exports.addProduct = async (req, res, next) => {
   const statusid = productData.status.id;
   const features = productData.features;
   const videolink = productData.videoLink;
-  const images = productData.images;
-
-  // console.log("Product name----", productname);
-  // console.log("Product cat----", prodcategory);
-  // console.log("Product vendor----", vendorid);
-  // console.log("Product pmid----", pmid);
-  // console.log("Product modelno----", modelno);
-  // console.log("Product status----", statusid);
-  // console.log("Product features----", features);
-  // console.log("Product video----", videolink);
-  // console.log("Product images----", images);
+  const images = productData.images;// This will contain the uploaded images
 
   try {
-    // Insert the new category into the database
-    const [result] = await db.promise().query('INSERT INTO product (name, image, videolink, modelno, country_id, status_id, category_id, pm_id, vendor_id) VALUES (?,?,?,?,?,?,?,?,?)',
-      [productname, images, videolink, modelno, 1, statusid, prodcategory, pmid, vendorid]);
 
-    const addedAllFeatures = [];
+    // Assuming that you want to store only one image in the product table, let's take the first image
+    const base64Data = images[0].replace(/^data:image\/\w+;base64,/, ""); // Remove base64 prefix
+    const buffer = Buffer.from(base64Data, 'base64'); // Convert base64 string to buffer
+
+
+    // Insert the new product into the database
+    const [result] = await db.promise().query(
+      'INSERT INTO product (name,image, videolink, modelno, country_id, status_id, category_id, pm_id, vendor_id) VALUES (?,?,?,?,?,?,?,?,?)',
+      [productname, buffer, videolink, modelno, 1, statusid, prodcategory, pmid, vendorid]
+    );
+
+    const productId = result.insertId;
 
     // Insert features
+    const addedAllFeatures = [];
     for (const [featureId, value] of Object.entries(features)) {
-      // Insert features into product_category_feature
-      const [addedfeatures] = await db.promise().query('INSERT INTO product_category_feature (product_id, feature_id, value) VALUES (?,?,?)',
-        [result.insertId, featureId, value]);
-      // Save each result
+      const [addedfeatures] = await db.promise().query(
+        'INSERT INTO product_category_feature (product_id, feature_id, value) VALUES (?,?,?)',
+        [productId, featureId, value]
+      );
       addedAllFeatures.push(addedfeatures);
     }
+
 
     // Insert a log into the stafflogs table
     await db.promise().query(
@@ -202,9 +205,11 @@ exports.addProduct = async (req, res, next) => {
     );
 
     // Return a success response
-    res.status(200).json({ message: 'Product added successfully', newproductid: result.insertId });
+    res.status(200).json({ message: 'Product added successfully', newproductid: productId });
   } catch (err) {
     res.status(500).json({ error: err.message });
+    console.log(err);
+
   }
 };
 
