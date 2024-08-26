@@ -1,7 +1,6 @@
 // controllers/productController.js
 const db = require('../config/database');
 const authMiddleware = require('../middlewares/authMiddleware');
-const multer = require('multer');
 
 exports.listProducts = async (req, res, next) => {
   try {
@@ -152,9 +151,8 @@ exports.getProductManagers = async (req, res, next) => {
   }
 };
 
-
 exports.addProduct = async (req, res, next) => {
-  console.log('rEQ bODY:', req.body);
+  // console.log('rEQ bODY:', req.body);
 
   const productData = req.body;
 
@@ -226,17 +224,11 @@ exports.getStatus = async (req, res, next) => {
 
 
 // Get Products
-exports.getProductDetails = async (req, res, next) => {
-  const productId = req.params.id;
-
-  if (!productId) {
-    return res.status(400).json({ message: 'Product ID is required' });
-  }
-
+exports.getAllProductDetails = async (req, res, next) => {
   try {
-    // Fetch product details from the product table along with category, vendor, and product manager details
-    const [product] = await db.promise().query(
-      `SELECT p.*, 
+    // Fetch all products with their category, vendor, product manager, and status details
+    const [products] = await db.promise().query(
+      `SELECT p.id, p.name, p.image, p.videolink, p.modelno, p.country_id, 
               c.name as category_name, 
               v.name as vendor_name, 
               pm.name as product_manager_name, 
@@ -245,39 +237,42 @@ exports.getProductDetails = async (req, res, next) => {
        JOIN category c ON p.category_id = c.id
        JOIN vendor v ON p.vendor_id = v.id
        JOIN staff pm ON p.pm_id = pm.id
-       JOIN status s ON p.status_id = s.id
-       WHERE p.id = ?`,
-      [productId]
+       JOIN status s ON p.status_id = s.id`
     );
 
-    if (product.length === 0) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    // Fetch the features associated with the product from product_category_feature and feature tables
+    // Fetch all features for all products
     const [features] = await db.promise().query(
-      `SELECT f.id as feature_id, f.name as feature_name, pcf.value 
+      `SELECT pcf.product_id, f.id as feature_id, f.name as feature_name, pcf.value 
        FROM product_category_feature pcf
-       JOIN feature f ON pcf.feature_id = f.id
-       WHERE pcf.product_id = ?`,
-      [productId]
+       JOIN feature f ON pcf.feature_id = f.id`
     );
 
-    // Combine product details and features into a single response object
-    const productDetails = {
-      ...product[0],
-      features: features.reduce((acc, feature) => {
+    // Combine product details and features into a single response array
+    const productsWithFeatures = products.map(product => {
+      // Filter features that belong to the current product
+      const productFeatures = features.filter(feature => feature.product_id === product.id);
+
+      // Convert the feature array to an object with feature names as keys
+      const featuresObj = productFeatures.reduce((acc, feature) => {
         acc[feature.feature_name] = feature.value;
         return acc;
-      }, {}),
-    };
+      }, {});
 
-    // Return the product details
-    res.status(200).json(productDetails);
+      // Return the product details with the features object included
+      return {
+        ...product,
+        features: featuresObj
+      };
+    });
+
+    // Return all product details
+    res.status(200).json(productsWithFeatures);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+
 
 
 

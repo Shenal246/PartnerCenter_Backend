@@ -11,7 +11,7 @@ const db = mysql.createConnection({
   // database: process.env.DB_NAME
   host: "localhost",
   user: "root",
-  password: "1234",
+  password: "0ARYQg55,xyz@123",
   database: "partnercenter_connex"
 });
 

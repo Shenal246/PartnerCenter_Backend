@@ -5,7 +5,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-router.get('/products', authMiddleware.verifyToken, productController.listProducts);
+// router.get('/products', authMiddleware.verifyToken, productController.listProducts);
 
 // For Categories
 router.get('/get-categories-srilanka', authMiddleware.verifyTokenforFunctions, productController.getCategories);
@@ -22,7 +22,7 @@ router.post('/get-featuresforcat-srilanka', authMiddleware.verifyTokenforFunctio
 router.get('/get-PM-srilanka', authMiddleware.verifyTokenforFunctions, productController.getProductManagers);
 
 router.post('/add-product', authMiddleware.verifyTokenforFunctions, productController.addProduct);
-router.get('/get-products/:id', authMiddleware.verifyTokenforFunctions, productController.getProductDetails);
+router.get('/get-products', productController.getAllProductDetails);
 
 // For status
 router.get('/get-status', authMiddleware.verifyTokenforFunctions, productController.getStatus);

@@ -11,9 +11,12 @@ const videoRoutes = require('./routes/videoRoutes.js');
 const staffRoutes = require('./routes/staffRoutes.js');
 const vendorRoutes = require('./routes/vendorRoutes.js');
 const dealregistrationRoutes = require('./routes/dealRegistrationRoutes.js');
+const promotionRoutes = require('./routes/promotionRoutes.js');
+
 // const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
 
 require('dotenv').config();
 
@@ -21,6 +24,9 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cookieParser());
+
+// Logging middleware
+app.use(morgan('tiny'));
 
 // Use CORS middleware
 app.use(cors({
@@ -45,6 +51,7 @@ app.use(videoRoutes);
 app.use(staffRoutes);
 app.use(vendorRoutes);
 app.use(dealregistrationRoutes);
+app.use(promotionRoutes);
 
 // Error handler middleware
 // app.use(errorHandler);
