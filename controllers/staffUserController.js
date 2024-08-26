@@ -17,7 +17,7 @@ exports.login = async (req, res) => {
             'SELECT id, password, is_password_changed FROM staff_user WHERE username = ?',
             [username]
         );
-
+        
         if (rows.length === 0) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
@@ -28,6 +28,8 @@ exports.login = async (req, res) => {
         if (!match) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
+        console.log(match);
+        
 
         // Check if the user has changed their password
         if (!user.is_password_changed) {
