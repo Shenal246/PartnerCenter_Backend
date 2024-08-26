@@ -6,5 +6,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 router.get('/get-vendors-srilanka', authMiddleware.verifyTokenforFunctions, vendorController.getVendors);
+router.get('/getproductsbyvendors/:vendorId', authMiddleware.verifyTokenforPartnerFunctions, vendorController.getProductsByVendor);
+router.get('/vendors/:vendorId/hot-products', authMiddleware.verifyTokenforFunctions, vendorController.getHotProductsByVendor);
+router.get('/products/:productId', authMiddleware.verifyTokenforFunctions, vendorController.getProductById);
+router.get('/get-productslist', authMiddleware.verifyTokenforFunctions, vendorController.getProducts);
 
 module.exports = router;

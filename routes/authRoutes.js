@@ -28,4 +28,10 @@ router.get('/protected', isAuthenticated, (req, res) => {
 //Verifytoken
 router.get('/verifytoken', authMiddlewaree.verifyToken);
 
+//VerifytokenFor Partner
+router.get('/verifytoken_partner', authMiddlewaree.verifyTokenforPartner);
+
+// Get partner User details
+router.get('/getuserdetailsapi', authMiddlewaree.verifyTokenforFunctions, partnerUserController.getUserDetails);
+
 module.exports = router;

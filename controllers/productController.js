@@ -201,7 +201,7 @@ exports.addProduct = async (req, res, next) => {
     // Insert a log into the stafflogs table
     await db.promise().query(
       'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
-      [`New product added: ${productname}`, req.user.id]
+      [`New product added: ${productId}`, req.user.id]
     );
 
     // Return a success response

@@ -10,6 +10,7 @@ const commonRoutes = require('./routes/commonRoutes.js');
 const videoRoutes = require('./routes/videoRoutes.js');
 const staffRoutes = require('./routes/staffRoutes.js');
 const vendorRoutes = require('./routes/vendorRoutes.js');
+const dealregistrationRoutes = require('./routes/dealRegistrationRoutes.js');
 // const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
 const cookieParser = require('cookie-parser')
@@ -23,12 +24,13 @@ app.use(cookieParser());
 
 // Use CORS middleware
 app.use(cors({
-  origin: 'http://192.168.13.218:3001', // Allow only requests from this origin
+  origin: ['http://192.168.13.218:3001', 'http://192.168.13.218:3002'], // Allow only requests from this origin
   credentials: true // Allow cookies to be sent with requests
 }));
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Increase the payload size limit for JSON and URL-encoded data
+app.use(bodyParser.json({ limit: '50mb' })); // Set the limit as needed
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true })); // Set the limit as needed
 
 // Session configuration
 // app.use(sessionConfig);
@@ -42,6 +44,7 @@ app.use(commonRoutes);
 app.use(videoRoutes);
 app.use(staffRoutes);
 app.use(vendorRoutes);
+app.use(dealregistrationRoutes);
 
 // Error handler middleware
 // app.use(errorHandler);

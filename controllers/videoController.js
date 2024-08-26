@@ -7,7 +7,7 @@ exports.getVideoInfo = async (req, res) => {
         // Query to fetch video information
         const [videos] = await db.promise().query(`
            SELECT 
-                id, 
+                id,  
                 description, 
                 title, 
                 link, 

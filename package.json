@@ -19,7 +19,8 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.0",
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "path": "^0.12.7"
   },
   "author": "CODEwork",
   "license": "ISC"
