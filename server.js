@@ -12,6 +12,7 @@ const staffRoutes = require('./routes/staffRoutes.js');
 const vendorRoutes = require('./routes/vendorRoutes.js');
 const dealregistrationRoutes = require('./routes/dealRegistrationRoutes.js');
 const promotionRoutes = require('./routes/promotionRoutes.js');
+const path = require('path');
 
 // const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
@@ -42,6 +43,8 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true })); // Set the li
 // app.use(sessionConfig);
 
 // Routes
+// Serve static files from the 'uploads' directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(authRoutes);
 app.use('/api/user', userRoutes);
 app.use(productRoutes);

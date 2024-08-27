@@ -26,7 +26,7 @@ router.get('/protected', isAuthenticated, (req, res) => {
 });
 
 //Verifytoken
-router.get('/verifytoken', authMiddlewaree.verifyToken);
+router.get('/verifytoken', authMiddlewaree.verifyTokenforStaff);
 
 //VerifytokenFor Partner
 router.get('/verifytoken_partner', authMiddlewaree.verifyTokenforPartner);

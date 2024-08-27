@@ -10,26 +10,30 @@ async function comparePassword(password, hashedPassword) {
 
 // Login function
 exports.login = async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, portalID } = req.body;
 
     try {
         const [rows] = await db.promise().query(
-            'SELECT id, password, is_password_changed FROM staff_user WHERE username = ?',
+            'SELECT id, password, is_password_changed, portal_id FROM staff_user WHERE username = ?',
             [username]
         );
-        
+
         if (rows.length === 0) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
 
         const user = rows[0];
 
+        if (!(user.portal_id === portalID)) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
-        console.log(match);
-        
+        // console.log(match);
+
 
         // Check if the user has changed their password
         if (!user.is_password_changed) {
@@ -50,7 +54,7 @@ exports.login = async (req, res) => {
             ['Staff Login', user.id]
         );
 
-        const token = jwt.sign({ id: user.id, username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id, username, portalID }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.status(200)
             .cookie('token', token,
