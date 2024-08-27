@@ -2,6 +2,7 @@ const db = require('../config/database');
 const { errorHandler } = require('../middlewares/errorHandler');
 const multer = require('multer');
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 // Configure multer for file storage
 const storage = multer.diskStorage({
@@ -44,7 +45,7 @@ const getFilePath = (files, fileName) => {
 // Function to check if a record exists by BR number
 const checkExistingBR = async (brNumber) => {
   const [existingRecord] = await db.promise().query(
-    'SELECT id FROM become_a_partner WHERE company_brno = ?', 
+    'SELECT id FROM become_a_partner WHERE company_brno = ?',
     [brNumber]
   );
   return existingRecord.length > 0;
@@ -158,4 +159,65 @@ exports.updateStatus = async (req, res) => {
     console.error('Error updating partner status:', error);
     errorHandler(error, req, res);
   }
+};
+
+exports.rejectpartnerfunction = async (req, res) => {
+
+  const { id, password, note } = req.body;
+
+  if (!id || !password || !note) {
+    return res.status(400).json({ message: 'Partner ID, Password, Note are required' });
+  }
+
+  const becomepartnerID = id;
+
+  try {
+    // Check password
+    const [getuser] = await db.promise().query(`
+      SELECT * FROM staff_user WHERE id = ?
+  `, [req.user.id]);
+
+    if (getuser.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const match = await bcrypt.compare(password, getuser[0].password);
+    if (!match) {
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+    // Fetch partner details from the become_a_partner table
+    const [partnerData] = await db.promise().query(`
+      SELECT * FROM become_a_partner WHERE id = ?
+  `, [becomepartnerID]);
+
+    if (partnerData.length === 0) {
+      return res.status(404).json({ message: 'Partner not found' });
+    }
+
+    const partner = partnerData[0];
+
+    // Change the become a partner status
+    await db.promise().query(
+      'UPDATE become_a_partner SET becomestatus_id = ?, approvedby_id = ?, note = ? WHERE id = ?',
+      [3, req.user.id, note, becomepartnerID]
+    );
+
+    await db.promise().query(
+      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+      [`Rejected a new partner: BR No = ${partner.company_brno}`, req.user.id]
+    );
+
+    res.status(200).json({
+      message: 'Partner Registration Rejected'
+    });
+
+
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+    console.log(err);
+    
+  }
+
+
 };

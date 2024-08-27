@@ -7,10 +7,12 @@ const authmiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 router.post('/becomePartner', partnerController.uploadFiles, partnerController.becomePartner);
-router.post('/becomePartnerRegister', companyController.registerPartnerCompany);
+router.post('/becomePartnerRegister', authmiddleware.verifyTokenforStaffFunctions, companyController.registerPartnerCompany);
 
 // Get become a partner details
 router.get('/get-becomePartner', partnerController.getPartnerApplications);
+
+router.post('/becomePartnerRejectApi', authmiddleware.verifyTokenforStaffFunctions, partnerController.rejectpartnerfunction);
 
 
 // Update become_a_partner's becomestatus_id
