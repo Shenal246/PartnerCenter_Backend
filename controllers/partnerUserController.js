@@ -10,7 +10,7 @@ exports.login = async (req, res) => {
 
     try {
         const [rows] = await db.promise().query(
-            'SELECT id, password, is_password_changed, portal_id FROM partner_user WHERE username = ?',
+            'SELECT id, password, is_password_changed, portal_id, partner_id FROM partner_user WHERE username = ?',
             [username]
         );
 
@@ -21,6 +21,16 @@ exports.login = async (req, res) => {
         const user = rows[0];
 
         if (!(user.portal_id === portalID)) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        // Check Partner status
+        const [userdata] = await db.promise().query(
+            'SELECT id, status_id FROM partner WHERE id = ?',
+            [user.partner_id]
+        );
+
+        if (userdata[0].status_id === 2) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 

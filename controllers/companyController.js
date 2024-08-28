@@ -4,9 +4,31 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 exports.registerPartnerCompany = async (req, res) => {
-  const { partnerId } = req.body;
+  const { id, password } = req.body;
+
+  const partnerId = id;
+
+  if (!partnerId || !password) {
+    return res.status(400).json({ message: 'Partner ID and password are required' });
+  }
 
   try {
+
+    // Check password
+    const [getuser] = await db.promise().query(`
+      SELECT * FROM staff_user WHERE id = ?
+  `, [req.user.id]);
+
+    if (getuser.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const match = await bcrypt.compare(password, getuser[0].password);
+    if (!match) {
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+
     // Fetch partner details from the become_a_partner table
     const [partnerData] = await db.promise().query(`
             SELECT * FROM become_a_partner WHERE id = ?
@@ -76,7 +98,18 @@ exports.registerPartnerCompany = async (req, res) => {
       partner.directoremail, hashedPassword, directorPartnerId, 1, 1 // Assuming portal_id and role_id are fixed values
     ]);
 
-    res.status(201).json({
+    // Change the become a partner status
+    await db.promise().query(
+      'UPDATE become_a_partner SET becomestatus_id = ?, approvedby_id = ? WHERE id = ?',
+      [2 , req.user.id, partnerId]
+    );
+
+    await db.promise().query(
+      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+      [`Registered a new partner: BR No = ${partner.company_brno}`, req.user.id]
+    );
+
+    res.status(200).json({
       message: 'Company, director, and partner user registered successfully',
       password: plainPassword // Send the generated password to the frontend
     });
