@@ -320,4 +320,203 @@ exports.updateProduct = async (req, res, next) => {
   }
 };
 
+// Get Products
+// exports.getAllProductDetailsForPartner = async (req, res, next) => {
+//   try {
+//     // Fetch all products with their category, vendor, product manager, and status details
+//     const [products] = await db.promise().query(
+//       `SELECT p.id, p.name, p.image, p.videolink, p.modelno, p.country_id, 
+//               c.name as category_name, 
+//               v.id as vendor_id, 
+//               v.name as vendor_name, 
+//               pm.name as product_manager_name, 
+//               s.name as status_name 
+//        FROM product p
+//        JOIN category c ON p.category_id = c.id
+//        JOIN vendor v ON p.vendor_id = v.id
+//        JOIN staff pm ON p.pm_id = pm.id
+//        JOIN status s ON p.status_id = s.id
+//        WHERE p.status_id=1
+//        `
+//     );
+
+//     // Fetch all features for all products
+//     const [features] = await db.promise().query(
+//       `SELECT pcf.product_id, f.id as feature_id, f.name as feature_name, pcf.value 
+//        FROM product_category_feature pcf
+//        JOIN feature f ON pcf.feature_id = f.id`
+//     );
+
+//     // Combine product details and features into a single response array
+//     const productsWithFeatures = products.map(product => {
+//       // Filter features that belong to the current product
+//       const productFeatures = features.filter(feature => feature.product_id === product.id);
+
+//       // Convert the feature array to an object with feature names as keys
+//       const featuresObj = productFeatures.reduce((acc, feature) => {
+//         acc[feature.feature_name] = feature.value;
+//         return acc;
+//       }, {});
+
+//       // Return the product details with the features object included
+//       return {
+//         ...product,
+//         features: featuresObj
+//       };
+//     });
+
+//     // Return all product details
+//     res.status(200).json(productsWithFeatures);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
+// Get Products that haven't been requested by a partner
+exports.getAllProductDetailsForPartnernotrequested = async (req, res, next) => {
+  try {
+    // Fetch partner's company_id using partner's user id
+    const [partnerResult] = await db.promise().query(
+      `SELECT partner.company_id 
+       FROM partner 
+       JOIN partner_user pu ON partner.id = pu.partner_id 
+       WHERE pu.id = ?`,
+      [req.user.id]
+    );
+
+    if (partnerResult.length === 0) {
+      return res.status(404).json({ message: 'Partner not found' });
+    }
+
+    const companyId = partnerResult[0].company_id;
+
+    console.log("company id----", companyId);
+
+
+    // Fetch products that have been requested by the partner's company
+    const [requestedProducts] = await db.promise().query(
+      `SELECT pr.product_id 
+       FROM productrequests pr
+       WHERE pr.company_id = ?`,
+      [companyId]
+    );
+
+    console.log("requested products----", requestedProducts);
+
+    // Create a set of requested product IDs for easy lookup
+    const requestedProductIds = new Set(requestedProducts.map((prod) => prod.product_id));
+
+    console.log("requested product ids----", requestedProductIds);
+
+
+    // Fetch all products with their category, vendor, product manager, and status details
+    const [products] = await db.promise().query(
+      `SELECT p.id, p.name, p.image, p.videolink, p.modelno, p.country_id, 
+              c.name as category_name, 
+              v.id as vendor_id, 
+              v.name as vendor_name, 
+              pm.name as product_manager_name, 
+              s.name as status_name 
+       FROM product p
+       JOIN category c ON p.category_id = c.id
+       JOIN vendor v ON p.vendor_id = v.id
+       JOIN staff pm ON p.pm_id = pm.id
+       JOIN status s ON p.status_id = s.id
+       WHERE p.status_id = 1`
+    );
+
+    // Filter products that haven't been requested by the partner
+    const availableProducts = products.filter((product) => !requestedProductIds.has(product.id));
+
+    // Fetch all features for all products
+    const [features] = await db.promise().query(
+      `SELECT pcf.product_id, f.id as feature_id, f.name as feature_name, pcf.value 
+       FROM product_category_feature pcf
+       JOIN feature f ON pcf.feature_id = f.id`
+    );
+
+    // Combine product details and features into a single response array
+    const productsWithFeatures = availableProducts.map(product => {
+      // Filter features that belong to the current product
+      const productFeatures = features.filter(feature => feature.product_id === product.id);
+
+      // Convert the feature array to an object with feature names as keys
+      const featuresObj = productFeatures.reduce((acc, feature) => {
+        acc[feature.feature_name] = feature.value;
+        return acc;
+      }, {});
+
+      // Return the product details with the features object included
+      return {
+        ...product,
+        features: featuresObj
+      };
+    });
+
+    console.log(productsWithFeatures);
+
+
+    // Return all available product details (excluding requested ones)
+    res.status(200).json(productsWithFeatures);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+    console.log(err);
+
+  }
+};
+
+// Add Product Request
+exports.partnerProductRequest = async (req, res, next) => {
+  const { id: productID } = req.body;
+  console.log(productID);
+
+  try {
+
+    // Fetch partner's company_id using partner's user id
+    const [partnerResult] = await db.promise().query(
+      `SELECT partner.company_id 
+       FROM partner 
+       JOIN partner_user pu ON partner.id = pu.partner_id 
+       WHERE pu.id = ?`,
+      [req.user.id]
+    );
+
+    if (partnerResult.length === 0) {
+      return res.status(404).json({ message: 'Partner not found' });
+    }
+
+    const companyId = partnerResult[0].company_id;
+
+    // Add a record to productrequests table
+    const [result] = await db.promise().query(
+      'INSERT INTO productrequests (product_id, prodrequeststatus_id, company_id) VALUES (?, ?, ?)',
+      [productID, 1, companyId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(500).json({ message: 'Product request failed' });
+    }
+
+    // Insert a log into the partnerlogs table
+    const [resultpartner] = await db.promise().query(
+      'INSERT INTO partnerlogs (timestamp, action, partner_user_id) VALUES (NOW(), ?, ?)',
+      [`Product Requested: ${productID}`, req.user.id]
+    );
+
+    if (resultpartner.affectedRows === 0) {
+      return res.status(500).json({ message: 'Logging Error' });
+    }
+
+    res.status(200).json({ message: 'Product Request Successfull' });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+    console.log(err);
+  }
+
+};
+
+
+
+
 
