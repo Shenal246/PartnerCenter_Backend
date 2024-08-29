@@ -1,4 +1,5 @@
 // controllers/productController.js
+const { json } = require('body-parser');
 const db = require('../config/database');
 const authMiddleware = require('../middlewares/authMiddleware');
 
@@ -151,6 +152,10 @@ exports.getProductManagers = async (req, res, next) => {
   }
 };
 
+// File Path: D:\Connex\PartnerCenter_Backend\controllers\productController.js
+
+// File Path: D:\Connex\PartnerCenter_Backend\controllers\productController.js
+
 exports.addProduct = async (req, res, next) => {
   // console.log('rEQ bODY:', req.body);
 
@@ -169,6 +174,8 @@ exports.addProduct = async (req, res, next) => {
   const features = productData.features;
   const videolink = productData.videoLink;
   const images = productData.images;// This will contain the uploaded images
+
+  console.log(productData);
 
   try {
 
@@ -197,10 +204,10 @@ exports.addProduct = async (req, res, next) => {
 
 
     // Insert a log into the stafflogs table
-    await db.promise().query(
-      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
-      [`New product added: ${productId}`, req.user.id]
-    );
+    // await db.promise().query(
+    //   'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+    //   [`New product added: ${productId}`, req.user.id]
+    // );
 
     // Return a success response
     res.status(200).json({ message: 'Product added successfully', newproductid: productId });
@@ -210,7 +217,6 @@ exports.addProduct = async (req, res, next) => {
 
   }
 };
-
 // Get Status
 exports.getStatus = async (req, res, next) => {
 
