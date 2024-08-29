@@ -25,6 +25,7 @@ router.post('/add-product', authMiddleware.verifyTokenforFunctions, productContr
 router.get('/get-products', authMiddleware.verifyTokenforStaffFunctions, productController.getAllProductDetails);
 
 router.get('/get-AllproductsforPartner-notrequested', authMiddleware.verifyTokenforPartnerFunctions, productController.getAllProductDetailsForPartnernotrequested);
+router.get('/get-AllproductsforPartner-requested', authMiddleware.verifyTokenforPartnerFunctions, productController.fetchMyProductsFunction);
 
 
 // For status

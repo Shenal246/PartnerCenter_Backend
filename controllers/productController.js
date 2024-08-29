@@ -517,6 +517,95 @@ exports.partnerProductRequest = async (req, res, next) => {
 };
 
 
+// Fetch My Products
+exports.fetchMyProductsFunction = async (req, res, next) => {
+
+  try {
+    // Fetch partner's company_id using partner's user id
+    const [partnerResult] = await db.promise().query(
+      `SELECT partner.company_id 
+       FROM partner 
+       JOIN partner_user pu ON partner.id = pu.partner_id 
+       WHERE pu.id = ?`,
+      [req.user.id]
+    );
+
+    if (partnerResult.length === 0) {
+      return res.status(404).json({ message: 'Partner not found' });
+    }
+
+    const companyId = partnerResult[0].company_id;
+
+    // Fetch products that have been requested by the partner's company
+    const [requestedProducts] = await db.promise().query(
+      `SELECT pr.product_id 
+       FROM productrequests pr
+       WHERE pr.company_id = ?`,
+      [companyId]
+    );
+
+    // Create a set of requested product IDs for easy lookup
+    const requestedProductIds = new Set(requestedProducts.map((prod) => prod.product_id));
+
+    // Fetch all products with their category, vendor, product manager, and status details
+    const [products] = await db.promise().query(
+      `SELECT p.id, p.name, p.image, p.videolink, p.modelno, p.country_id, 
+              c.name as category_name, 
+              v.id as vendor_id, 
+              v.name as vendor_name, 
+              v.vendorlogo as vendor_logo, 
+              v.status_id as vendor_status, 
+              pm.name as product_manager_name, 
+              s.name as status_name 
+       FROM product p
+       JOIN category c ON p.category_id = c.id
+       JOIN vendor v ON p.vendor_id = v.id
+       JOIN staff pm ON p.pm_id = pm.id
+       JOIN status s ON p.status_id = s.id
+       WHERE p.status_id = 1`
+    );
+
+    // Filter products that have been requested by the partner
+    const reqProducts = products.filter((product) => requestedProductIds.has(product.id));
+
+    // Fetch all features for all products
+    const [features] = await db.promise().query(
+      `SELECT pcf.product_id, f.id as feature_id, f.name as feature_name, pcf.value 
+       FROM product_category_feature pcf
+       JOIN feature f ON pcf.feature_id = f.id`
+    );
+
+    // Combine product details and features into a single response array
+    const productsWithFeatures = reqProducts.map(product => {
+      // Filter features that belong to the current product
+      const productFeatures = features.filter(feature => feature.product_id === product.id);
+
+      // Convert the feature array to an object with feature names as keys
+      const featuresObj = productFeatures.reduce((acc, feature) => {
+        acc[feature.feature_name] = feature.value;
+        return acc;
+      }, {});
+
+      // Return the product details with the features object included
+      return {
+        ...product,
+        features: featuresObj
+      };
+    });
+
+    console.log(productsWithFeatures);
+
+
+    // Return registered product details (excluding requested ones)
+    res.status(200).json(productsWithFeatures);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+    console.log(err);
+
+  }
+
+};
+
 
 
 

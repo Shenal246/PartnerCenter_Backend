@@ -100,3 +100,27 @@ exports.updatePromo = async (req, res, next) => {
   }
 
 };
+
+exports.listPromoforpartners = async (req, res, next) => {
+  try {
+    const [rows] = await db.promise().query(`
+      SELECT
+      id, 
+        title, 
+        details, 
+        proimage, 
+        product_id, 
+        status_id, 
+        country_id, 
+         DATE_FORMAT(upload_date, '%Y-%m-%d') AS upload_date 
+      FROM 
+        promotion
+        WHERE status_id=1
+    `);
+    
+    res.status(200).json(rows);
+    
+  } catch (err) {
+    next(err);
+  }
+};
