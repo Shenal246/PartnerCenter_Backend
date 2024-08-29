@@ -80,3 +80,35 @@ exports.getVideoInfoforPartner = async (req, res) => {
 
     }
 };
+
+
+
+// Controller function to get video information
+exports.updateVideo = async (req, res) => {
+    // Controller function to update video status
+  const updateVideoData = req.body;
+  
+  if (!updateVideoData) {
+    return res.status(400).json({ message: 'Video data is required' });
+  
+  }
+  try {
+    // Update product information in the database
+    await db.promise().query(
+      'UPDATE video SET status_id = ? WHERE id = ?',
+      [updateVideoData.status_id, updateVideoData.id]
+    );
+  
+    // Insert a log into the stafflogs table
+    // await db.promise().query(
+    //   'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+    //   [` Update PromoData : ${updateVideoData.id}`, req.user.id]
+    // );
+  
+    // Return a success response
+    res.status(200).json({ message: 'Promotion updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  
+  }
+  };

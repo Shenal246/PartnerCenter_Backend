@@ -11,4 +11,7 @@ router.get('/vendors/:vendorId/hot-products', authMiddleware.verifyTokenforFunct
 router.get('/products/:productId', authMiddleware.verifyTokenforFunctions, vendorController.getProductById);
 router.get('/get-productslist', authMiddleware.verifyTokenforFunctions, vendorController.getProducts);
 
+router.get('/get-vendorswithCategories-srilanka', authMiddleware.verifyTokenforPartnerFunctions, vendorController.getVendorswithCategory);
+
+
 module.exports = router;
