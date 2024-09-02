@@ -8,6 +8,7 @@ const router = express.Router();
 router.get('/promo', authmiddleware.verifyTokenforStaffFunctions, sales.getActivepromo);
 router.get('/prod', authmiddleware.verifyTokenforStaffFunctions, sales.getActiveprod);
 router.get('/vendor', authmiddleware.verifyTokenforStaffFunctions, sales.getActivevendors);
+router.get('/deal', authmiddleware.verifyTokenforStaffFunctions, sales.getActivedeal);
 router.get('/res', authmiddleware.verifyTokenforStaffFunctions, sales.getActiveres);
 router.get('/resprd', authmiddleware.verifyTokenforStaffFunctions, sales.getActiveresprd);
 router.get('/status', authmiddleware.verifyTokenforStaffFunctions, sales.getActivestatus);
