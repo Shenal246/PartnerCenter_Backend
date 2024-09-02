@@ -17,7 +17,26 @@ exports.getActivepromo = async (req, res) => {
       res.status(500).json({ error: err.message });
     }
   };
+  
 
+  exports.getActiveprod= async (req, res) => {
+    const cnt = req.headers.cnt;
+  
+    try {
+      const [rows] = await db.promise().query(`SELECT pr.id as id , cm.company_name as companyname,pp.email as email,pp.mobileno as mbno ,p.id as prdid, p.name as prdname,pr.status_id as status ,p.image as prdimage,pp.photo as ppimage,ven.id as venid ,ven.name as venname ,ven.vendorlogo as logo , s.name as status FROM productrequests pr JOIN product p on pr.product_id=p.id JOIN partner pp on pp.id=pr.partner_id JOIN company cm on cm.id=pp.company_id JOIN vendor ven on ven.id = p.vendor_id JOIN status s on s.id = pr.status_id ORDER by id ASC`);
+  
+      const vendors = rows.map(row => ({
+        ...row,
+        logo: row.logo ? row.logo.toString('base64') : null,
+        prdimage: row.prdimage ? row.prdimage.toString('base64') : null, // Convert the image data to base64
+      }));
+  
+      res.status(200).json(vendors);
+    } catch (err) {
+      console.error("Error fetching :", err);
+      res.status(500).json({ error: err.message });
+    }
+  };
   exports.getActivepass = async (req, res) => {
     const id = req.headers.id;
   
@@ -73,6 +92,39 @@ exports.getActivepromo = async (req, res) => {
       res.status(500).json({ error: err.message });
     }
   };
+  exports.getActiveresprd = async (req, res) => {
+     try {
+       const [rows] = await db.promise().query(`SELECT * FROM reconsiderprd`);
+   
+       const vendors = rows.map(row => ({
+         ...row,
+         image_data: row.image_data ? row.image_data.toString('base64') : null // Convert the image data to base64
+       }));
+   
+       res.status(200).json(vendors);
+     } catch (err) {
+       console.error("Error fetching :", err);
+       res.status(500).json({ error: err.message });
+     }
+   };
+
+  exports.getActivevendors = async (req, res) => {
+    ;
+   
+     try {
+       const [rows] = await db.promise().query(`SELECT * FROM vendor`);
+   
+       const vendors = rows.map(row => ({
+         ...row,
+         vendorlogo: row.vendorlogo ? row.vendorlogo.toString('base64') : null // Convert the image data to base64
+       }));
+   
+       res.status(200).json(vendors);
+     } catch (err) {
+       console.error("Error fetching :", err);
+       res.status(500).json({ error: err.message });
+     }
+   }
   exports.updatePromoreq = async (req, res) => {
     const { id } = req.params;
     const status = req.headers.status;
@@ -93,6 +145,26 @@ exports.getActivepromo = async (req, res) => {
     }
 };
 
+exports.updateProdoreq = async (req, res) => {
+  const { id } = req.params;
+  const status = req.headers.status;
+  try {
+      const [result] = await db.promise().query(
+          `UPDATE productrequests SET status_id=? WHERE id=?;`,
+          [status,id]
+      );
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ message: 'not_found' });
+      }
+
+      res.status(200).json({ message: ' updated successfully' });
+  } catch (err) {
+      console.error("Error updating vendor:", err);
+      res.status(500).json({ error: err.message });
+  }
+};
+
 exports.addreason = async (req, res) => {
   
   const reason = req.headers.reason;
@@ -100,6 +172,27 @@ exports.addreason = async (req, res) => {
   try {
       const [result] = await db.promise().query(
           `INSERT INTO reconsider (promoreqid,reason) VALUES (?,?);`,
+          [id,reason]
+      );
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ message: ' not found' });
+      }
+
+      res.status(200).json({ message: ' updated successfully' });
+  } catch (err) {
+      console.error("Error updating vendor:", err);
+      res.status(500).json({ error: err.message });
+  }
+};
+
+exports.addreasonprd = async (req, res) => {
+  
+  const reason = req.headers.reason;
+  const id = req.headers.id;
+  try {
+      const [result] = await db.promise().query(
+          `INSERT INTO reconsiderprd (prodreqid,reason) VALUES (?,?);`,
           [id,reason]
       );
 
