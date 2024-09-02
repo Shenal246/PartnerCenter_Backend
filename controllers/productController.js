@@ -200,10 +200,10 @@ exports.addProduct = async (req, res, next) => {
 
 
     // Insert a log into the stafflogs table
-    await db.promise().query(
-      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
-      [`New product added: ${productId}`, req.user.id]
-    );
+    // await db.promise().query(
+    //   'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+    //   [`New product added: ${productId}`, req.user.id]
+    // );
 
     // Return a success response
     res.status(200).json({ message: 'Product added successfully', newproductid: productId });
@@ -275,46 +275,31 @@ exports.getAllProductDetails = async (req, res, next) => {
 
 // For update product
 exports.updateProduct = async (req, res, next) => {
-  const productId = req.params.id;
+
   const productData = req.body;
 
-  if (!productData) {
+  if (!productData.id ||!productData.status_id ) {
     return res.status(400).json({ message: 'Product data is required' });
   }
 
-  const productname = productData.name;
-  const prodcategory = productData.category;
-  const vendorid = productData.vendor.id;
-  const pmid = productData.productManager.id;
-  const modelno = productData.modelNo;
-  const statusid = productData.status.id;
-  const features = productData.features;
-  const videolink = productData.videoLink;
-  const images = productData.images;
-
+ 
   try {
     // Update product information in the database
     await db.promise().query(
-      'UPDATE product SET name = ?, image = ?, videolink = ?, modelno = ?, category_id = ?, vendor_id = ?, pm_id = ?, status_id = ? WHERE id = ?',
-      [productname, images, videolink, modelno, prodcategory, vendorid, pmid, statusid, productId]
+      'UPDATE product SET  status_id = ? WHERE id = ?',
+      [ productData.status_id, productData.id]
     );
-
-    // Update product features
-    for (const [featureId, value] of Object.entries(features)) {
-      await db.promise().query(
-        'REPLACE INTO product_category_feature (product_id, feature_id, value) VALUES (?,?,?)',
-        [productId, featureId, value]
-      );
-    }
 
     // Insert a log into the stafflogs table
-    await db.promise().query(
-      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
-      [`Product updated: ${productname}`, req.user.id]
-    );
+    // await db.promise().query(
+    //   'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+    //   [`Product updated: ${productData.id}`, req.user.id]
+    // );
 
     // Return a success response
-    res.status(200).json({ message: 'Product updated successfully', productId });
+
+    console.log(productData);
+    res.status(200).json({ message: 'Product updated successfully', productData });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -32,6 +32,13 @@ router.get('/verifytoken', authMiddlewaree.verifyTokenforStaff);
 router.get('/verifytoken_partner', authMiddlewaree.verifyTokenforPartner);
 
 // Get partner User details
-router.get('/getuserdetailsapi', authMiddlewaree.verifyTokenforFunctions, partnerUserController.getUserDetails);
+router.get('/getuserdetailsapi', authMiddlewaree.verifyTokenforPartnerFunctions, partnerUserController.getUserDetails);
+
+// Get staff  User details for connex 
+router.get('/getstaffdetailsapi',staffUserController.getUserDetails)
+
+// Get partner company members
+router.get('/getpartnercompanymembersapi', authMiddlewaree.verifyTokenforPartnerFunctions, partnerUserController.getCompanymembers);
+
 
 module.exports = router;
