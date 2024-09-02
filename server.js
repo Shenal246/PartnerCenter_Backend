@@ -33,8 +33,8 @@ app.use(morgan('tiny'));
 
 // Use CORS middleware
 app.use(cors({
-  origin: 'http://192.168.12.68:3001', // Replace with your frontend's URL
-  credentials: true // This allows cookies to be sent
+  origin: ['http://192.168.13.249:3001', 'http://192.168.13.218:3002'], // Allow only requests from this origin
+  credentials: true // Allow cookies to be sent with requests
 }));
 
 app.use(sales)
