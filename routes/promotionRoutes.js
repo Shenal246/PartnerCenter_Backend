@@ -6,13 +6,13 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 //for promotions
-router.get('/get-promotions',authMiddleware.verifyTokenforStaffFunctions,promotionController.listPromo);
-router.post('/add-promotions',authMiddleware.verifyTokenforStaffFunctions,promotionController.addPromo);
+router.get('/get-promotions', authMiddleware.verifyTokenforStaffFunctions, promotionController.listPromo);
+router.post('/add-promotions', authMiddleware.verifyTokenforStaffFunctions, promotionController.addPromo);
 
-router.put('/update-promotions',authMiddleware.verifyTokenforStaffFunctions,promotionController.updatePromo);
+router.put('/update-promotions', authMiddleware.verifyTokenforStaffFunctions, promotionController.updatePromo);
 
-router.get('/get-promotionsforpartner',authMiddleware.verifyTokenforPartnerFunctions,promotionController.listPromoforpartners);
+router.get('/get-promotionsforpartner', authMiddleware.verifyTokenforPartnerFunctions, promotionController.listPromoforpartners);
 
-
+router.post('/add-promotionrequest', authMiddleware.verifyTokenforPartnerFunctions, promotionController.addpromotionrequestbypartner);
 
 module.exports = router;

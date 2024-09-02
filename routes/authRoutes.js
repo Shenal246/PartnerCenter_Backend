@@ -34,4 +34,8 @@ router.get('/verifytoken_partner', authMiddlewaree.verifyTokenforPartner);
 // Get partner User details
 router.get('/getuserdetailsapi', authMiddlewaree.verifyTokenforFunctions, partnerUserController.getUserDetails);
 
+// Get partner company members
+router.get('/getpartnercompanymembersapi', authMiddlewaree.verifyTokenforPartnerFunctions, partnerUserController.getCompanymembers);
+
+
 module.exports = router;

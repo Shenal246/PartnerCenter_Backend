@@ -16,9 +16,9 @@ exports.listPromo = async (req, res, next) => {
       FROM 
         promotion
     `);
-    
+
     res.json(rows);
-    
+
   } catch (err) {
     next(err);
   }
@@ -105,22 +105,82 @@ exports.listPromoforpartners = async (req, res, next) => {
   try {
     const [rows] = await db.promise().query(`
       SELECT
-      id, 
+        id, 
         title, 
         details, 
         proimage, 
         product_id, 
         status_id, 
         country_id, 
-         DATE_FORMAT(upload_date, '%Y-%m-%d') AS upload_date 
+        DATE_FORMAT(upload_date, '%Y-%m-%d') AS upload_date,
+        promotiontype_id,
+        DATE_FORMAT(expire_date, '%Y-%m-%d') AS expire_date
       FROM 
         promotion
-        WHERE status_id=1
+      WHERE 
+        status_id = 1 
+        AND (expire_date IS NULL OR expire_date > NOW())
     `);
-    
+
     res.status(200).json(rows);
-    
+
   } catch (err) {
     next(err);
+  }
+};
+
+exports.addpromotionrequestbypartner = async (req, res, next) => {
+
+  const promotioid = req.body.prmotionid;
+
+  try {
+
+    // Fetch partner's company_id using partner's user id
+    const [partnerResult] = await db.promise().query(
+      `SELECT partner.company_id 
+       FROM partner 
+       JOIN partner_user pu ON partner.id = pu.partner_id 
+       WHERE pu.id = ?`,
+      [req.user.id]
+    );
+
+    if (partnerResult.length === 0) {
+      return res.status(404).json({ message: 'Partner not found' });
+    }
+
+    const companyId = partnerResult[0].company_id;
+
+     // Check if the promotion request already exists for this company
+     const [existingPromotion] = await db.promise().query(
+      `SELECT * FROM promotionrequests 
+       WHERE promotion_id = ? AND company_id = ?`,
+      [promotioid, companyId]
+    );
+
+    if (existingPromotion.length > 0) {
+      return res.status(409).json({ message: 'Promotion request already exists' });
+    }
+
+    // Add promotion request to the database
+    const [promotionInsertResult] = await db.promise().query(
+      `INSERT INTO promotionrequests (promotion_id, promotionrequeststatus_id, company_id, date) VALUES (?, ?, ?, NOW())`,
+      [promotioid, 1, companyId]
+    );
+
+    // if (promotionInsertResult.affectedRows === 0) {
+    //   return res.status(500).json({ message: 'Failed to add promotion request' });
+    // }
+
+    await db.promise().query(
+      'INSERT INTO partnerlogs (timestamp, action, partner_user_id) VALUES (NOW(), ?, ?)',
+      [` Requested a Promotion : ${promotioid}`, req.user.id]
+    );
+
+    res.status(200).json({ message: 'Promotion request added successfully' });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+    console.log(err);
+
   }
 };

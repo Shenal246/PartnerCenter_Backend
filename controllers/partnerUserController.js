@@ -143,3 +143,42 @@ exports.getUserDetails = async (req, res) => {
         // errorHandler(err, req, res);
     }
 };
+
+// Get Company members
+exports.getCompanymembers = async (req, res) => {
+
+    try {
+
+        // Fetch partner's company_id using partner's user id
+        const [partnerResult] = await db.promise().query(
+            `SELECT partner.company_id 
+         FROM partner 
+         JOIN partner_user pu ON partner.id = pu.partner_id 
+         WHERE pu.id = ?`,
+            [req.user.id]
+        );
+
+        if (partnerResult.length === 0) {
+            return res.status(404).json({ message: 'Partner not found' });
+        }
+
+        const companyId = partnerResult[0].company_id;
+
+        // Fetch company members
+        const [companymembers] = await db.promise().query(
+            `SELECT name, photo, designation 
+         FROM partner
+         WHERE company_id = ?`,
+            [companyId]
+        );
+
+        if (companymembers.length === 0) {
+            return res.status(404).json({ message: 'Company members not found' });
+        }
+
+        res.status(200).json({companymembers });
+    } catch (err) {
+        console.error('Error changing password:', err);
+        // errorHandler(err, req, res);
+    }
+};
