@@ -26,6 +26,7 @@ router.post('/add-product',  productController.addProduct);
 router.get('/get-products', productController.getAllProductDetails);
 router.put('/update-products', productController.updateProduct);
 router.get('/get-AllproductsforPartner-notrequested', authMiddleware.verifyTokenforPartnerFunctions, productController.getAllProductDetailsForPartnernotrequested);
+router.get('/get-AllproductsforPartner-requested', authMiddleware.verifyTokenforPartnerFunctions, productController.fetchMyProductsFunction);
 
 
 // For status

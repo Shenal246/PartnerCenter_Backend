@@ -14,6 +14,8 @@ const dealregistrationRoutes = require('./routes/dealRegistrationRoutes.js');
 const promotionRoutes = require('./routes/promotionRoutes.js');
 const path = require('path');
 
+const sales = require('./routes/salesRouter.js');
+
 // const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -31,9 +33,11 @@ app.use(morgan('tiny'));
 
 // Use CORS middleware
 app.use(cors({
-  origin: ['http://192.168.12.80:3001'], // Allow only requests from this origin
-  credentials: true // Allow cookies to be sent with requests
+  origin: 'http://192.168.12.68:3001', // Replace with your frontend's URL
+  credentials: true // This allows cookies to be sent
 }));
+
+app.use(sales)
 
 // Increase the payload size limit for JSON and URL-encoded data
 app.use(bodyParser.json({ limit: '50mb' })); // Set the limit as needed

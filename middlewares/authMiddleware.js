@@ -157,11 +157,10 @@ exports.verifyTokenforStaffFunctions = async (req, res, next) => {
     res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
-
-exports.verifyTokenforFunctions = (req, res, next) => {
+exports.verifyTokenforFunctionsnew = (req, res, next) => {
   // Retrieve token from the 'token' cookie
   const token = req.cookies.token;
-
+  console.log(token);
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
@@ -177,6 +176,30 @@ exports.verifyTokenforFunctions = (req, res, next) => {
     res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
+
+exports.verifyTokenforFunctions = (req, res, next) => {
+  // Retrieve token from the 'token' cookie
+  const token = req.cookies.token;
+  console.log("Token from cookie:", token);
+
+  if (!token) {
+    return res.status(401).json({ message: 'Access denied. No token provided.' });
+  }
+
+  try {
+    // Verify the token
+    const decoded = jwtUtils.verifyToken(token);
+    console.log("Decoded token data:", decoded);
+
+    req.user = decoded; // Attach decoded token data to req.user
+
+    next(); // Proceed to the next middleware/route handler
+  } catch (err) {
+    console.error("Token verification error:", err);
+    res.status(401).json({ message: 'Invalid or expired token' });
+  }
+};
+
 
 
 exports.isAuthenticated = (req, res, next) => {
