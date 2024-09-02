@@ -14,6 +14,8 @@ const dealregistrationRoutes = require('./routes/dealRegistrationRoutes.js');
 const promotionRoutes = require('./routes/promotionRoutes.js');
 const path = require('path');
 
+const sales = require('./routes/salesRouter.js');
+
 // const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -34,6 +36,8 @@ app.use(cors({
   origin: ['http://192.168.13.249:3001', 'http://192.168.13.218:3002'], // Allow only requests from this origin
   credentials: true // Allow cookies to be sent with requests
 }));
+
+app.use(sales)
 
 // Increase the payload size limit for JSON and URL-encoded data
 app.use(bodyParser.json({ limit: '50mb' })); // Set the limit as needed
