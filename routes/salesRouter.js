@@ -11,12 +11,14 @@ router.get('/vendor', authmiddleware.verifyTokenforStaffFunctions, sales.getActi
 router.get('/deal', authmiddleware.verifyTokenforStaffFunctions, sales.getActivedeal);
 router.get('/res', authmiddleware.verifyTokenforStaffFunctions, sales.getActiveres);
 router.get('/resprd', authmiddleware.verifyTokenforStaffFunctions, sales.getActiveresprd);
+router.get('/resdll', authmiddleware.verifyTokenforStaffFunctions, sales.getActiveresdll);
 router.get('/status', authmiddleware.verifyTokenforStaffFunctions, sales.getActivestatus);
 router.get('/pass', authmiddleware.verifyTokenforStaffFunctions, sales.getActivepass);
 router.put('/status/:id',authmiddleware.verifyTokenforFunctions, sales.updatePromoreq);
 router.put('/statusprd/:id',authmiddleware.verifyTokenforFunctions, sales.updateProdoreq);
+router.put('/statusdll/:id',authmiddleware.verifyTokenforFunctions, sales.updatedealoreq);
 router.post('/reason',authmiddleware.verifyTokenforFunctions, sales.addreason);
-router.post('/reasonprd',authmiddleware.verifyTokenforFunctions, sales.addreasonprd);
+router.post('/reasondll',authmiddleware.verifyTokenforFunctions, sales.addreasondll);
 
 
 

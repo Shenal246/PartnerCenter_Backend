@@ -22,7 +22,7 @@ exports.getActivepromo = async (req, res) => {
     const id = req.headers.id;
   
     try {
-      const [rows] = await db.promise().query(`SELECT dr.id as id, dr.projectname as projectname,dr.companyname as comname,dr.email as email,tp.name as type,p.name as product,crn.name as curency ,dr.budget as budegt, st.name as status  FROM dealregistration dr join status st on st.id = dr.pm_status join type tp on tp.id = dr.type_id join product p on p.id = dr.product_id join staff staf on staf.id = p.pm_id  JOIN currencyunit crn on crn.id=dr.currencyunit_id where staf.id=${id} ORDER by dr.id ASC `);
+      const [rows] = await db.promise().query(`SELECT dr.designation as des, dr.id as id,dr.closetimeline as closetimeline,dr.compititor as compettitor,dr.specialrequest as spr, dr.projectname as projectname,dr.companyname as comname,dr.email as email,tp.name as type,p.name as product,crn.name as curency ,dr.budget as budegt, st.name as status  FROM dealregistration dr join status st on st.id = dr.pm_status join type tp on tp.id = dr.type_id join product p on p.id = dr.product_id join staff staf on staf.id = p.pm_id  JOIN currencyunit crn on crn.id=dr.currencyunit_id where p.pm_id=${id} ORDER by dr.id ASC`);
   
       const vendors = rows.map(row => ({
         ...row,
@@ -125,6 +125,22 @@ exports.getActivepromo = async (req, res) => {
      }
    };
 
+   exports.getActiveresdll = async (req, res) => {
+    try {
+      const [rows] = await db.promise().query(`SELECT * FROM reconsiderdll`);
+  
+      const vendors = rows.map(row => ({
+        ...row,
+        image_data: row.image_data ? row.image_data.toString('base64') : null // Convert the image data to base64
+      }));
+  
+      res.status(200).json(vendors);
+    } catch (err) {
+      console.error("Error fetching :", err);
+      res.status(500).json({ error: err.message });
+    }
+  };
+
   exports.getActivevendors = async (req, res) => {
     ;
    
@@ -182,6 +198,27 @@ exports.updateProdoreq = async (req, res) => {
   }
 };
 
+
+exports.updatedealoreq = async (req, res) => {
+  const { id } = req.params;
+  const status = req.headers.status;
+  try {
+      const [result] = await db.promise().query(
+          `UPDATE dealregistration SET pm_status=? WHERE id=?;`,
+          [status,id]
+      );
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ message: 'not_found' });
+      }
+
+      res.status(200).json({ message: ' updated successfully' });
+  } catch (err) {
+      console.error("Error updating vendor:", err);
+      res.status(500).json({ error: err.message });
+  }
+};
+
 exports.addreason = async (req, res) => {
   
   const reason = req.headers.reason;
@@ -210,6 +247,27 @@ exports.addreasonprd = async (req, res) => {
   try {
       const [result] = await db.promise().query(
           `INSERT INTO reconsiderprd (prodreqid,reason) VALUES (?,?);`,
+          [id,reason]
+      );
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ message: ' not found' });
+      }
+
+      res.status(200).json({ message: ' updated successfully' });
+  } catch (err) {
+      console.error("Error updating vendor:", err);
+      res.status(500).json({ error: err.message });
+  }
+};
+
+exports.addreasondll = async (req, res) => {
+  
+  const reason = req.headers.reason;
+  const id = req.headers.id;
+  try {
+      const [result] = await db.promise().query(
+          `INSERT INTO reconsiderdll(dealregistration_id, reason) VALUES (?,?)`,
           [id,reason]
       );
 
