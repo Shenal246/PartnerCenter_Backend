@@ -12,7 +12,8 @@ exports.listPromo = async (req, res, next) => {
         product_id, 
         status_id, 
         country_id, 
-         DATE_FORMAT(upload_date, '%Y-%m-%d') AS upload_date 
+         DATE_FORMAT(upload_date, '%Y-%m-%d') AS upload_date,
+          DATE_FORMAT(expire_date, '%Y-%m-%d') AS expire_date 
       FROM 
         promotion
     `);
@@ -38,8 +39,9 @@ exports.addPromo = async (req, res, next) => {
   const status_id = promoData.status;
   const country_id = 1;
   const upload_date = promoData.uploadedDate;
+  const expire_date = promoData.expireDate;
   const proimage = promoData.imageUrl;
-
+const promotiontype_id=1;
   try {
     // Handle the base64 image data
     if (!proimage || !proimage.startsWith('data:image')) {
@@ -52,8 +54,8 @@ exports.addPromo = async (req, res, next) => {
 
     // Insert the new promo into the database
     const [result] = await db.promise().query(
-      'INSERT INTO promotion (title, details, proimage, product_id, status_id, country_id, upload_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [title, details, buffer, product_id, status_id, country_id, upload_date]
+      'INSERT INTO promotion (title, details, proimage, product_id, status_id, country_id, upload_date,promotiontype_id,expire_date) VALUES (?, ?, ?, ?, ?, ?, ?,?,?)',
+      [title, details, buffer, product_id, status_id, country_id, upload_date,promotiontype_id,expire_date]
     );
     const productId = result.insertId;
 

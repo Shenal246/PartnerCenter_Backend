@@ -27,6 +27,8 @@ exports.getVideoInfo = async (req, res) => {
     } catch (err) {
         console.error('Error fetching video information:', err);
         res.status(500).json({ message: 'Internal server error', error: err.message });
+        console.log(err);
+        
 
 
     }

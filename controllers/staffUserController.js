@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const db = require('../config/database');
 const { errorHandler } = require('../middlewares/errorHandler');
 const jwt = require('jsonwebtoken');
+const jwtUtils = require('../utils/jwtUtils');
+
 
 // Compare password with the stored hashed password
 async function comparePassword(password, hashedPassword) {
@@ -115,3 +117,45 @@ exports.logout = (req, res) => {
     res.clearCookie('token');
     res.status(200).json({ message: 'Logout successful' });
 };
+
+
+//staff details
+exports.getUserDetails = async (req, res) => {
+    const token = req.cookies.token;
+  
+    try {
+      // Verify the token
+      const decoded = jwtUtils.verifyToken(token);
+      req.user = decoded; // Attach decoded token data to req.user
+  
+      // Fetch user details from the staff_user table
+      const [staff_user] = await db.promise().query(
+        'SELECT * FROM staff_user WHERE id = ?',
+        [req.user.id]
+      );
+  
+      // Check if staff_user is found
+      if (staff_user.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Fetch additional details from the staff table
+      const [staff] = await db.promise().query(
+        'SELECT * FROM staff WHERE id = ?',
+        [staff_user[0].id] // Use the id of the fetched staff_user
+      );
+  
+      // Check if staff details are found
+      if (staff.length === 0) {
+        return res.status(404).json({ message: 'Staff details not found' });
+      }
+  
+      // Return the combined staff details
+      res.status(200).json(staff[0]);
+  
+    } catch (err) {
+      console.error('Error fetching user details:', err.message);
+      res.status(401).json({ message: 'Unauthorized access' });
+    }
+  };
+  

@@ -18,18 +18,18 @@ router.get('/get-features-srilanka', authMiddleware.verifyTokenforFunctions, pro
 router.post('/get-featuresforcat-srilanka', authMiddleware.verifyTokenforFunctions, productController.getFeaturestoCat);
 // router.post('/get-featuresforcat-srilanka',productController.getFeatures);
 
-// For Products
+
 router.get('/get-PM-srilanka', authMiddleware.verifyTokenforFunctions, productController.getProductManagers);
 
-router.post('/add-product', authMiddleware.verifyTokenforFunctions, productController.addProduct);
-router.get('/get-products', authMiddleware.verifyTokenforStaffFunctions, productController.getAllProductDetails);
-
+// For Products
+router.post('/add-product',  productController.addProduct);
+router.get('/get-products', productController.getAllProductDetails);
+router.put('/update-products', productController.updateProduct);
 router.get('/get-AllproductsforPartner-notrequested', authMiddleware.verifyTokenforPartnerFunctions, productController.getAllProductDetailsForPartnernotrequested);
 
 
 // For status
 router.get('/get-status', authMiddleware.verifyTokenforFunctions, productController.getStatus);
-
 router.post('/partnerproductrequest', authMiddleware.verifyTokenforPartnerFunctions, productController.partnerProductRequest);
 
 module.exports = router;

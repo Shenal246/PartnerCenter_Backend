@@ -10,7 +10,7 @@ router.get('/get-video-info-partners', authMiddleware.verifyTokenforPartnerFunct
 // Route to get video information
 router.get('/get-video-info', videoController.getVideoInfo);
 router.post('/add-video-info', videoController.addNewVideo);
-router.put('/update-video', videoController.updateVideo);
+router.put('/update-video-info', videoController.updateVideo);
 
 // update-video
 
