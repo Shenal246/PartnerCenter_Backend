@@ -15,4 +15,7 @@ router.get('/get-promotionsforpartner', authMiddleware.verifyTokenforPartnerFunc
 
 router.post('/add-promotionrequest', authMiddleware.verifyTokenforPartnerFunctions, promotionController.addpromotionrequestbypartner);
 
+router.get('/getpromotiontypeapi', authMiddleware.verifyTokenforStaffFunctions, promotionController.getPromotypes);
+
+
 module.exports = router;

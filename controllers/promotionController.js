@@ -41,7 +41,7 @@ exports.addPromo = async (req, res, next) => {
   const upload_date = promoData.uploadedDate;
   const expire_date = promoData.expireDate;
   const proimage = promoData.imageUrl;
-const promotiontype_id=1;
+  const promotiontype_id = promoData.promotiontypeid;
   try {
     // Handle the base64 image data
     if (!proimage || !proimage.startsWith('data:image')) {
@@ -55,7 +55,7 @@ const promotiontype_id=1;
     // Insert the new promo into the database
     const [result] = await db.promise().query(
       'INSERT INTO promotion (title, details, proimage, product_id, status_id, country_id, upload_date,promotiontype_id,expire_date) VALUES (?, ?, ?, ?, ?, ?, ?,?,?)',
-      [title, details, buffer, product_id, status_id, country_id, upload_date,promotiontype_id,expire_date]
+      [title, details, buffer, product_id, status_id, country_id, upload_date, promotiontype_id, expire_date]
     );
     const productId = result.insertId;
 
@@ -152,8 +152,8 @@ exports.addpromotionrequestbypartner = async (req, res, next) => {
 
     const companyId = partnerResult[0].company_id;
 
-     // Check if the promotion request already exists for this company
-     const [existingPromotion] = await db.promise().query(
+    // Check if the promotion request already exists for this company
+    const [existingPromotion] = await db.promise().query(
       `SELECT * FROM promotionrequests 
        WHERE promotion_id = ? AND company_id = ?`,
       [promotioid, companyId]
@@ -184,5 +184,22 @@ exports.addpromotionrequestbypartner = async (req, res, next) => {
     res.status(500).json({ error: err.message });
     console.log(err);
 
+  }
+};
+
+exports.getPromotypes = async (req, res, next) => {
+  try {
+    const [rows] = await db.promise().query(`
+      SELECT
+      id, 
+      name
+      FROM 
+        promotiontype
+    `);
+
+    res.status(200).json(rows);
+
+  } catch (err) {
+    next(err);
   }
 };
