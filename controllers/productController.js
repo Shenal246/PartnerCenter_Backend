@@ -171,8 +171,6 @@ exports.addProduct = async (req, res, next) => {
   const videolink = productData.videoLink;
   const images = productData.images;// This will contain the uploaded images
 
-  console.log(productData);
-
   try {
 
     // Assuming that you want to store only one image in the product table, let's take the first image

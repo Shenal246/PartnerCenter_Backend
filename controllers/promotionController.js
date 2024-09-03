@@ -27,7 +27,6 @@ exports.listPromo = async (req, res, next) => {
 
 exports.addPromo = async (req, res, next) => {
   const promoData = req.body;
-  console.log(promoData);
 
   if (!promoData) {
     return res.status(400).json({ message: 'Promo data is required' });

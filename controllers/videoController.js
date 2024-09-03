@@ -44,7 +44,6 @@ exports.addNewVideo = async (req, res) => {
         const [result] = await db.promise().query('INSERT INTO video (description, title, link, status_id, country_id, uploaded_date) VALUES (?,?,?,?,?,?)',
             [VideoData.description, VideoData.title, VideoData.videoUrl, VideoData.status, 1, VideoData.uploadedDate]);
 
-        console.log(VideoData);
         res.status(200).json({ message: 'Video added successfully', newvideoid: result.insertId });
     } catch (error) {
         console.error('Error fetching VideoData information:', err);
