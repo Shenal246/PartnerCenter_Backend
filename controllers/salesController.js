@@ -4,7 +4,7 @@ exports.getActivepromo = async (req, res) => {
     const id = req.headers.id;
   
     try {
-      const [rows] = await db.promise().query(`SELECT pr.date as pdate ,pr.id as prtid,s3.name as status, p.proimage as image_data, part.name as pname,part.email as pemail ,part.mobileno as pmobileno,p.id as pid ,p.details as pdetails,p.title as ptitle,pr.status_id as prstatus ,prod.name as prodname FROM promotionrequest pr JOIN promotion p ON pr.promotion_id = p.id JOIN product prod ON p.product_id = prod.id JOIN status s1 ON prod.status_id = s1.id JOIN partner part ON pr.partner_id = part.id JOIN status s2 ON part.status_id = s2.id JOIN status s3 ON pr.status_id = s3.id JOIN status s4 ON p.status_id = s4.id join staff staf on staf.id = prod.pm_id where staf.id=${id} ORDER by pr.id;`);
+      const [rows] = await db.promise().query(`SELECT pr.date as pdate ,pr.id as prtid,s3.name as status, p.proimage as image_data, part.name as pname,part.email as pemail ,part.mobileno as pmobileno,p.id as pid ,p.details as pdetails,p.title as ptitle,pr.promotionrequeststatus_id as prstatus ,prod.name as prodname FROM promotionrequests pr JOIN promotion p ON pr.promotion_id = p.id JOIN product prod ON p.product_id = prod.id JOIN status s1 ON prod.status_id = s1.id JOIN company com ON pr.company_id = com.id JOIN partner part on com.id=part.company_id JOIN status s2 ON part.status_id = s2.id JOIN promotionrequeststatus s3 ON pr.promotionrequeststatus_id = s3.id JOIN status s4 ON p.status_id = s4.id join staff staf on staf.id = prod.pm_id where staf.id=${id} ORDER by pr.id;`);
   
       const vendors = rows.map(row => ({
         ...row,
@@ -22,7 +22,7 @@ exports.getActivepromo = async (req, res) => {
     const id = req.headers.id;
   
     try {
-      const [rows] = await db.promise().query(`SELECT dr.designation as des, dr.id as id,dr.closetimeline as closetimeline,dr.compititor as compettitor,dr.specialrequest as spr, dr.projectname as projectname,dr.companyname as comname,dr.email as email,tp.name as type,p.name as product,crn.name as curency ,dr.budget as budegt, st.name as status  FROM dealregistration dr join status st on st.id = dr.pm_status join type tp on tp.id = dr.type_id join product p on p.id = dr.product_id join staff staf on staf.id = p.pm_id  JOIN currencyunit crn on crn.id=dr.currencyunit_id where p.pm_id=${id} ORDER by dr.id ASC`);
+      const [rows] = await db.promise().query(`SELECT dr.designation as des, dr.id as id,dr.closetimeline as closetimeline,dr.compititor as compettitor,dr.specialrequest as spr, dr.projectname as projectname,dr.companyname as comname,dr.email as email,tp.name as type,p.name as product,crn.name as curency ,dr.budget as budegt, st.name as status  FROM dealregistration dr join dealstatus st on st.id = dr.pm_status join type tp on tp.id = dr.type_id join product p on p.id = dr.product_id join staff staf on staf.id = p.pm_id  JOIN currencyunit crn on crn.id=dr.currencyunit_id where p.pm_id=${id} ORDER by dr.id ASC`);
   
       const vendors = rows.map(row => ({
         ...row,
@@ -40,7 +40,7 @@ exports.getActivepromo = async (req, res) => {
     const id = req.headers.id;
   
     try {
-      const [rows] = await db.promise().query(`SELECT pr.id as id , cm.company_name as companyname,pp.email as email,pp.mobileno as mbno ,p.id as prdid, p.name as prdname,pr.status_id as status ,p.image as prdimage,pp.photo as ppimage,ven.id as venid ,ven.name as venname ,ven.vendorlogo as logo , s.name as status FROM productrequests pr JOIN product p on pr.product_id=p.id JOIN partner pp on pp.id=pr.partner_id JOIN company cm on cm.id=pp.company_id JOIN vendor ven on ven.id = p.vendor_id JOIN status s on s.id = pr.status_id join staff staf on staf.id = p.pm_id where staf.id=${id}  ORDER by id ASC`);
+      const [rows] = await db.promise().query(`SELECT pr.id as id , com.company_name as companyname,prt.email as email,prt.mobileno as mbno ,p.id as prdid, p.name as prdname,s.name as status ,p.image as prdimage,prt.photo as ppimage,ven.id as venid ,ven.name as venname ,ven.vendorlogo as logo , s.name as status FROM productrequests pr JOIN product p on pr.product_id=p.id JOIN company com on com.id=pr.company_id JOIN partner prt on prt.company_id=com.id JOIN vendor ven on ven.id = p.vendor_id JOIN prodrequeststatus s on s.id = pr.prodrequeststatus_id join staff staf on staf.id = p.pm_id where staf.id=${id}  ORDER by id ASC`);
   
       const vendors = rows.map(row => ({
         ...row,
@@ -78,7 +78,7 @@ exports.getActivepromo = async (req, res) => {
     const cnt = req.headers.cnt;
   
     try {
-      const [rows] = await db.promise().query(`SELECT * FROM status`);
+      const [rows] = await db.promise().query(`SELECT * FROM promotionrequeststatus`);
   
       const vendors = rows.map(row => ({
         ...row,
@@ -163,7 +163,7 @@ exports.getActivepromo = async (req, res) => {
     const status = req.headers.status;
     try {
         const [result] = await db.promise().query(
-            `UPDATE promotionrequest SET status_id=? WHERE id=?;`,
+            `UPDATE promotionrequests SET promotionrequeststatus_id=? WHERE id=?;`,
             [status,id]
         );
 
@@ -183,7 +183,7 @@ exports.updateProdoreq = async (req, res) => {
   const status = req.headers.status;
   try {
       const [result] = await db.promise().query(
-          `UPDATE productrequests SET status_id=? WHERE id=?;`,
+          `UPDATE productrequests SET prodrequeststatus_id=? WHERE id=?;`,
           [status,id]
       );
 
@@ -198,27 +198,40 @@ exports.updateProdoreq = async (req, res) => {
   }
 };
 
-
+//not dealstatus_id
 exports.updatedealoreq = async (req, res) => {
   const { id } = req.params;
   const status = req.headers.status;
+  const userid = req.headers.userid;
+  
+
+  let winloststatus_id = null; // Initialize with null or default value
+
   try {
+      // Determine winloststatus_id based on the status value
+      if (status === '2') {
+          winloststatus_id = 1;
+      } else if (status === '3') {
+          winloststatus_id = 2;
+      }
+
       const [result] = await db.promise().query(
-          `UPDATE dealregistration SET pm_status=? WHERE id=?;`,
-          [status,id]
+          `UPDATE dealregistration SET pm_status=?, winloststatus_id=?,approvedby_id=? WHERE id=?;`,
+          [status, winloststatus_id,userid, id]  // Add winloststatus_id to the query parameters
       );
 
       if (result.affectedRows === 0) {
           return res.status(404).json({ message: 'not_found' });
       }
 
-      res.status(200).json({ message: ' updated successfully' });
+      res.status(200).json({ message: 'updated successfully' });
   } catch (err) {
       console.error("Error updating vendor:", err);
       res.status(500).json({ error: err.message });
   }
 };
 
+//ok
 exports.addreason = async (req, res) => {
   
   const reason = req.headers.reason;
@@ -239,7 +252,7 @@ exports.addreason = async (req, res) => {
       res.status(500).json({ error: err.message });
   }
 };
-
+//ok
 exports.addreasonprd = async (req, res) => {
   
   const reason = req.headers.reason;
@@ -260,7 +273,7 @@ exports.addreasonprd = async (req, res) => {
       res.status(500).json({ error: err.message });
   }
 };
-
+//ok
 exports.addreasondll = async (req, res) => {
   
   const reason = req.headers.reason;
