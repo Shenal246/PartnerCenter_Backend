@@ -16,6 +16,16 @@ const path = require('path');
 
 const sales = require('./routes/salesRouter.js');
 
+
+
+const authRoute = require('./routes/routes/authRoutes.js');
+const vendor= require('./routes/routes/vendoRoutes.js');
+const Blogs =require('./routes/routes/blogRoutes.js');
+const event = require('./routes/routes/eventRoutes.js')
+const contact = require('./routes/routes/contactRoutes.js')
+const newsRouter = require('./routes/routes/newsRoutes.js');
+const web = require('./routes/routes/WebRouter.js')
+
 // const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -60,6 +70,16 @@ app.use(vendorRoutes);
 app.use(dealregistrationRoutes);
 app.use(promotionRoutes);
 
+
+
+
+app.use(authRoute);
+app.use(vendor);
+app.use(newsRouter);
+app.use(Blogs);
+app.use(event);
+app.use(contact);
+app.use(web);
 // Error handler middleware
 // app.use(errorHandler);
 
