@@ -123,3 +123,74 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
+// Add Vendor
+exports.addVendor = async (req, res, next) => {
+  const vendorData = req.body;
+
+  if (!vendorData) {
+    return res.status(400).json({ message: 'vendor data is required' });
+  }
+
+  const name = vendorData.name;
+  const status_id = vendorData.status;
+  const country_id = 1;
+  const proimage = vendorData.imageUrl;
+  try {
+    // Handle the base64 image data
+    if (!proimage || !proimage.startsWith('data:image')) {
+      return res.status(400).json({ message: 'Invalid image data' });
+    }
+
+    // Remove the base64 prefix and convert to buffer
+    const base64Data = proimage.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Insert the new vendor into the database
+    const [result] = await db.promise().query(
+      'INSERT INTO vendor (name, vendorlogo, status_id, country_id) VALUES (?, ?, ?, ?)',
+      [name, buffer, status_id, country_id]
+    );
+    const vendorId = result.insertId;
+
+    // Insert a log into the stafflogs table
+    await db.promise().query(
+      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+      [` New vendor Added : ${vendorId}`, req.user.id]
+    );
+
+    return res.status(200).json({ message: 'vendor added successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    console.error(error);
+  }
+};
+
+exports.updatevendor = async (req, res, next) => {
+  const updatevendorData = req.body;
+
+  if (!updatevendorData) {
+    return res.status(400).json({ message: 'vendor data is required' });
+
+  }
+  try {
+    // Update product information in the database
+    await db.promise().query(
+      'UPDATE vendor SET status_id = ? WHERE id = ?',
+      [updatevendorData.status_id, updatevendorData.id]
+    );
+
+    // Insert a log into the stafflogs table
+    await db.promise().query(
+      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+      [` Update vendorData : ${updatevendorData.id}`, req.user.id]
+    );
+
+    // Return a success response
+    res.status(200).json({ message: 'Vendor updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+
+  }
+
+};
+
