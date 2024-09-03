@@ -14,17 +14,6 @@ const dealregistrationRoutes = require('./routes/dealRegistrationRoutes.js');
 const promotionRoutes = require('./routes/promotionRoutes.js');
 const path = require('path');
 
-
-
-// const authRoute = require('./routes/routes/');
-// const vendor= require('./routes/routes/vendoRoutes.js');
-// const Blogs =require('./routes/routes/blogRoutes.js');
-// const event = require('./routes/routes/eventRoutes.js')
-// const contact = require('./routes/routes/contactRoutes.js')
-// const newsRouter = require('./routes/routes/newsRoutes.js');
-// const web = require('./routes/routes/WebRouter.js')
-
-
 const sales = require('./routes/salesRouter.js');
 
 // const sessionConfig = require('./config/sessionConfig');
@@ -44,7 +33,7 @@ app.use(morgan('tiny'));
 
 // Use CORS middleware
 app.use(cors({
-  origin: ['https://development.connexit.biz','https://www.connexit.biz','https://adminportal.connexit.biz','https://connexit.co.nz','https://www.connexit.co.nz'],// Allow only requests from this origin
+  origin: ['http://10.33.69.149:3001', 'http://192.168.12.68:3001','http://192.168.12.68:3000'], // Allow only requests from this origin
   credentials: true // Allow cookies to be sent with requests
 }));
 
@@ -70,13 +59,6 @@ app.use(staffRoutes);
 app.use(vendorRoutes);
 app.use(dealregistrationRoutes);
 app.use(promotionRoutes);
-// app.use(authRoute);
-// app.use(vendor);
-// app.use(newsRouter);
-// app.use(Blogs);
-// app.use(event);
-// app.use(contact);
-// app.use(web);
 
 // Error handler middleware
 // app.use(errorHandler);
