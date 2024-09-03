@@ -19,6 +19,7 @@ router.put('/statusprd/:id',authmiddleware.verifyTokenforFunctions, sales.update
 router.put('/statusdll/:id',authmiddleware.verifyTokenforFunctions, sales.updatedealoreq);
 router.post('/reason',authmiddleware.verifyTokenforFunctions, sales.addreason);
 router.post('/reasondll',authmiddleware.verifyTokenforFunctions, sales.addreasondll);
+router.post('/reasonprd',authmiddleware.verifyTokenforFunctions, sales.addreasonprd);
 
 
 
