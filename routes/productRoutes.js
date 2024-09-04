@@ -33,4 +33,6 @@ router.get('/get-AllproductsforPartner-requested', authMiddleware.verifyTokenfor
 router.get('/get-status', authMiddleware.verifyTokenforFunctions, productController.getStatus);
 router.post('/partnerproductrequest', authMiddleware.verifyTokenforPartnerFunctions, productController.partnerProductRequest);
 
+router.get('/getproductsbyvendors/:id', authMiddleware.verifyTokenforPartnerFunctions, productController.getProductsbyVendorForDeal);
+
 module.exports = router;
