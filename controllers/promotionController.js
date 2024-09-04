@@ -17,7 +17,7 @@ exports.listPromo = async (req, res, next) => {
       FROM 
         promotion
     `);
-
+console.log(rows);
     res.json(rows);
 
   } catch (err) {

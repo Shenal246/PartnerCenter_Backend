@@ -590,5 +590,34 @@ exports.fetchMyProductsFunction = async (req, res, next) => {
 };
 
 
+exports.getProductsbyVendorForDeal = async (req, res, next) => {
+  const { id } = req.params; // Get the category ID from the URL
+
+  if (!id) {
+    return res.status(400).json({ message: 'Vendor name is required' });
+  }
+
+  try {
+   
+    // Select products by vendorid
+    const [rows] = await db.promise().query(
+      'SELECT id,name FROM product WHERE vendor_id=?',
+      [id]
+    );
+
+    console.log(rows);
+    
+
+    // Return a success response
+    res.status(200).json({ rows });
+  } catch (err) {
+    console.log(err);
+    console.error('Error updating category:', err);
+    res.status(500).json({ error: err.message });
+   
+    
+  }
+};
+
 
 
