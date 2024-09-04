@@ -16,6 +16,9 @@ const path = require('path');
 
 const sales = require('./routes/salesRouter.js');
 
+
+
+
 // const sessionConfig = require('./config/sessionConfig');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -59,6 +62,10 @@ app.use(staffRoutes);
 app.use(vendorRoutes);
 app.use(dealregistrationRoutes);
 app.use(promotionRoutes);
+
+
+
+
 
 // Error handler middleware
 // app.use(errorHandler);
