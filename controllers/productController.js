@@ -87,7 +87,6 @@ exports.addFeature = async (req, res) => {
   try {
     const results = [];
     for (let index = 0; index < features.length; index++) {
-      console.log("Features", features[index].name);
 
       // Insert the new feature into the database
       const [result] = await db.promise().query(
@@ -129,7 +128,6 @@ exports.getFeatures = async (req, res, next) => {
 // Get Features to given categoryid
 exports.getFeaturestoCat = async (req, res, next) => {
   const catID = req.body;
-  console.log("cat ID ---", catID.categoryId);
 
   try {
     const [rows] = await db.promise().query('SELECT * FROM feature WHERE category_id=(?)', catID.categoryId);
@@ -153,7 +151,6 @@ exports.getProductManagers = async (req, res, next) => {
 
 
 exports.addProduct = async (req, res, next) => {
-  // console.log('rEQ bODY:', req.body);
 
   const productData = req.body;
 
@@ -296,7 +293,6 @@ exports.updateProduct = async (req, res, next) => {
 
     // Return a success response
 
-    console.log(productData);
     res.status(200).json({ message: 'Product updated successfully', productData });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -373,9 +369,6 @@ exports.getAllProductDetailsForPartnernotrequested = async (req, res, next) => {
 
     const companyId = partnerResult[0].company_id;
 
-    console.log("company id----", companyId);
-
-
     // Fetch products that have been requested by the partner's company
     const [requestedProducts] = await db.promise().query(
       `SELECT pr.product_id 
@@ -384,13 +377,8 @@ exports.getAllProductDetailsForPartnernotrequested = async (req, res, next) => {
       [companyId]
     );
 
-    console.log("requested products----", requestedProducts);
-
     // Create a set of requested product IDs for easy lookup
     const requestedProductIds = new Set(requestedProducts.map((prod) => prod.product_id));
-
-    console.log("requested product ids----", requestedProductIds);
-
 
     // Fetch all products with their category, vendor, product manager, and status details
     const [products] = await db.promise().query(
@@ -436,8 +424,6 @@ exports.getAllProductDetailsForPartnernotrequested = async (req, res, next) => {
       };
     });
 
-    console.log(productsWithFeatures);
-
 
     // Return all available product details (excluding requested ones)
     res.status(200).json(productsWithFeatures);
@@ -451,7 +437,6 @@ exports.getAllProductDetailsForPartnernotrequested = async (req, res, next) => {
 // Add Product Request
 exports.partnerProductRequest = async (req, res, next) => {
   const { id: productID } = req.body;
-  console.log(productID);
 
   try {
 
@@ -576,7 +561,7 @@ exports.fetchMyProductsFunction = async (req, res, next) => {
       };
     });
 
-    console.log(productsWithFeatures);
+   
 
 
     // Return registered product details (excluding requested ones)
@@ -605,8 +590,6 @@ exports.getProductsbyVendorForDeal = async (req, res, next) => {
       [id]
     );
 
-    console.log(rows);
-    
 
     // Return a success response
     res.status(200).json({ rows });
