@@ -175,6 +175,17 @@ exports.addProduct = async (req, res, next) => {
     const buffer = Buffer.from(base64Data, 'base64'); // Convert base64 string to buffer
 
 
+    const [product] = await db.promise().query(
+      'Select * from product WHERE modelno=? ',
+      [modelno]
+    );
+
+    if (product.length) {
+      return res.status(400).json({ message: 'Product Already Exsits' });
+     }
+
+
+
     // Insert the new product into the database
     const [result] = await db.promise().query(
       'INSERT INTO product (name,image, videolink, modelno, country_id, status_id, category_id, pm_id, vendor_id) VALUES (?,?,?,?,?,?,?,?,?)',
@@ -195,10 +206,10 @@ exports.addProduct = async (req, res, next) => {
 
 
     // Insert a log into the stafflogs table
-    // await db.promise().query(
-    //   'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
-    //   [`New product added: ${productId}`, req.user.id]
-    // );
+    await db.promise().query(
+      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+      [`New product added: ${productId}`, req.user.id]
+    );
 
     // Return a success response
     res.status(200).json({ message: 'Product added successfully', newproductid: productId });
@@ -273,16 +284,16 @@ exports.updateProduct = async (req, res, next) => {
 
   const productData = req.body;
 
-  if (!productData.id ||!productData.status_id ) {
+  if (!productData.id || !productData.status_id) {
     return res.status(400).json({ message: 'Product data is required' });
   }
 
- 
+
   try {
     // Update product information in the database
     await db.promise().query(
       'UPDATE product SET  status_id = ? WHERE id = ?',
-      [ productData.status_id, productData.id]
+      [productData.status_id, productData.id]
     );
 
     // Insert a log into the stafflogs table
@@ -561,7 +572,7 @@ exports.fetchMyProductsFunction = async (req, res, next) => {
       };
     });
 
-   
+
 
 
     // Return registered product details (excluding requested ones)
@@ -583,7 +594,7 @@ exports.getProductsbyVendorForDeal = async (req, res, next) => {
   }
 
   try {
-   
+
     // Select products by vendorid
     const [rows] = await db.promise().query(
       'SELECT id,name FROM product WHERE vendor_id=?',
@@ -597,8 +608,8 @@ exports.getProductsbyVendorForDeal = async (req, res, next) => {
     console.log(err);
     console.error('Error updating category:', err);
     res.status(500).json({ error: err.message });
-   
-    
+
+
   }
 };
 
