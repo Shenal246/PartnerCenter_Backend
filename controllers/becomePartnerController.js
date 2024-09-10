@@ -114,8 +114,10 @@ exports.getPartnerApplications = async (req, res) => {
         bp.directorwtsapp AS directorWhatsapp,
         bp.form20submit AS form20File,
         bp.date,
-        JSON_OBJECT('id', c.id, 'name', c.name) AS country,
-        JSON_OBJECT('id', bs.id, 'name', bs.name) AS becomeStatus
+        c.id AS countryId,
+        c.name AS countryName,
+        bs.id AS becomeStatusId,
+        bs.name AS becomeStatusName
       FROM 
         become_a_partner bp
       JOIN 
@@ -216,7 +218,7 @@ exports.rejectpartnerfunction = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message });
     console.log(err);
-    
+
   }
 
 
