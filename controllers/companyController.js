@@ -2,6 +2,7 @@
 const db = require('../config/database');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 exports.registerPartnerCompany = async (req, res) => {
   const { id, password } = req.body;
@@ -109,9 +110,105 @@ exports.registerPartnerCompany = async (req, res) => {
       [`Registered a new partner: BR No = ${partner.company_brno}`, req.user.id]
     );
 
-    res.status(200).json({
-      message: 'Company, director, and partner user registered successfully',
-      password: plainPassword // Send the generated password to the frontend
+    let transporter = nodemailer.createTransport({
+      host: "smtp-mail.outlook.com",  // Outlook SMTP server
+      port: 587,                     // SMTP port for Outlook
+      secure: false,                 // true for 465 (SSL), false for other ports like 587 (TLS)
+      auth: {
+        user: process.env.EMAIL_USERNAME,  // Your Outlook email address
+        pass: process.env.EMAIL_PASSWORD      // Your Outlook password
+      },
+      tls: {
+        ciphers: 'SSLv3'
+      }
+    });
+
+    // Email options
+    const mailOptions = {
+      from: process.env.EMAIL_USERNAME,
+      to: partner.directoremail,
+      subject: 'Your New Account Password for Connex Partner Center',
+      html: `
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f4f4f4;
+          margin: 0;
+          padding: 0;
+        }
+        .email-container {
+          max-width: 600px;
+          margin: 20px auto;
+          background: #ffffff;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+          background-color: #4CAF50;
+          color: #ffffff;
+          padding: 10px;
+          text-align: center;
+          border-top-left-radius: 8px;
+          border-top-right-radius: 8px;
+        }
+        .content {
+          padding: 20px;
+          text-align: center;
+          line-height: 1.6;
+        }
+        .footer {
+          text-align: center;
+          padding: 10px;
+          font-size: 12px;
+          color: #777;
+        }
+        .button {
+          display: inline-block;
+          padding: 10px 20px;
+          margin: 20px 0;
+          background-color: #0056b3;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 5px;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          Connex Partner Portal - Welcome!
+        </div>
+        <div class="content">
+          <h1>Welcome to Connex Partner Center!</h1>
+          <p>Your account has been created successfully. Below is your initial password:</p>
+          <p><b>${plainPassword}</b></p>
+          <a href="https://partneradminportal.connexit.biz/" class="button">Login Now</a>
+          <p>Please change your password after logging in to ensure your account's security.</p>
+        </div>
+        <div class="footer">
+          This is an automated message, please do not reply directly to this email. For assistance, please contact our support.
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+    };
+
+
+    // Sending the email
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Error sending password email', error: error });
+      }
+      console.log('Email sent: ' + info.response);
+      res.status(200).json({
+        message: 'Company, director, and partner user registered successfully, password sent via email',
+      });
     });
 
   } catch (err) {

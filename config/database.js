@@ -3,26 +3,26 @@
 const mysql = require('mysql2');
 require('dotenv').config();
 
-// Create a single database connection
-const db = mysql.createConnection({
-  // host: process.env.DB_HOST,
-  // user: process.env.DB_USER,
-  // password: process.env.DB_PASSWORD,
-  // database: process.env.DB_NAME
-  host: "localhost",
-  user: "root",
-  password: "0ARYQg55,xyz@123",
-  database: "partnercenter_connex"
+// Create a connection pool
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "1234",
+  database: process.env.DB_NAME || "partnercenter_connex",
+  waitForConnections: true,
+  connectionLimit: 10, // You can adjust the connection limit based on your requirements
+  queueLimit: 0 // No limit to the number of queries that can be queued
 });
 
-// Connect to the database
-db.connect((err) => {
+// Check the pool connection
+pool.getConnection((err, connection) => {
   if (err) {
     console.error('Error connecting to the database:', err);
     return;
   }
-  console.log('Connected to the database');
+  console.log('Connected to the database via pool');
+  connection.release(); // Release the connection back to the pool
 });
 
-// Export the database connection
-module.exports = db;
+// Export the pool
+module.exports = pool;
