@@ -182,7 +182,7 @@ exports.addProduct = async (req, res, next) => {
 
     if (product.length) {
       return res.status(400).json({ message: 'Product Already Exsits' });
-     }
+    }
 
 
 
@@ -274,6 +274,20 @@ exports.getAllProductDetails = async (req, res, next) => {
 
     // Return all product details
     res.status(200).json(productsWithFeatures);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get Products Ides
+exports.getAllProductIdes = async (req, res, next) => {
+
+  try {
+    // Fetch all products with their category, vendor, product manager, and status details
+    const [rows] = await db.promise().query('SELECT id ,name FROM product');
+    res.status(200).json(rows);
+
+    // Return all product details
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
