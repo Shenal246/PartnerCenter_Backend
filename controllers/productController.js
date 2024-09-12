@@ -151,8 +151,9 @@ exports.getProductManagers = async (req, res, next) => {
 
 
 exports.addProduct = async (req, res, next) => {
-
   const productData = req.body;
+
+  console.log(productData);
 
   if (!productData) {
     return res.status(400).json({ message: 'Product data is required' });
@@ -160,50 +161,46 @@ exports.addProduct = async (req, res, next) => {
 
   const productname = productData.name;
   const prodcategory = productData.category;
-  const vendorid = productData.vendor.id;
-  const pmid = productData.productManager.id;
+  const vendorid = productData.vendor;
+  const pmid = productData.productManager;
   const modelno = productData.modelNo;
-  const statusid = productData.status.id;
+  const statusid = productData.status;
   const features = productData.features;
   const videolink = productData.videoLink;
-  const images = productData.images;// This will contain the uploaded images
+  const images = req.file; // This will contain the uploaded images
 
   try {
-
-    // Assuming that you want to store only one image in the product table, let's take the first image
-    const base64Data = images[0].replace(/^data:image\/\w+;base64,/, ""); // Remove base64 prefix
-    const buffer = Buffer.from(base64Data, 'base64'); // Convert base64 string to buffer
-
+    // Check if file is provided
+    const imagePath = images ? `/uploads/product/${images.filename}` : null;
 
     const [product] = await db.promise().query(
-      'Select * from product WHERE modelno=? ',
+      'SELECT * FROM product WHERE modelno=?',
       [modelno]
     );
 
     if (product.length) {
-      return res.status(400).json({ message: 'Product Already Exsits' });
+      return res.status(400).json({ message: 'Product Already Exists' });
     }
-
-
 
     // Insert the new product into the database
     const [result] = await db.promise().query(
-      'INSERT INTO product (name,image, videolink, modelno, country_id, status_id, category_id, pm_id, vendor_id) VALUES (?,?,?,?,?,?,?,?,?)',
-      [productname, buffer, videolink, modelno, 1, statusid, prodcategory, pmid, vendorid]
+      'INSERT INTO product (name, image, videolink, modelno, country_id, status_id, category_id, pm_id, vendor_id) VALUES (?,?,?,?,?,?,?,?,?)',
+      [productname, imagePath, videolink, modelno, 1, statusid, prodcategory, pmid, vendorid]
     );
 
     const productId = result.insertId;
 
-    // Insert features
+    // Insert features if they exist
     const addedAllFeatures = [];
-    for (const [featureId, value] of Object.entries(features)) {
-      const [addedfeatures] = await db.promise().query(
-        'INSERT INTO product_category_feature (product_id, feature_id, value) VALUES (?,?,?)',
-        [productId, featureId, value]
-      );
-      addedAllFeatures.push(addedfeatures);
+    if (features && Object.keys(features).length > 0) {
+      for (const [featureId, value] of Object.entries(features)) {
+        const [addedfeatures] = await db.promise().query(
+          'INSERT INTO product_category_feature (product_id, feature_id, value) VALUES (?,?,?)',
+          [productId, featureId, value]
+        );
+        addedAllFeatures.push(addedfeatures);
+      }
     }
-
 
     // Insert a log into the stafflogs table
     await db.promise().query(
@@ -216,9 +213,9 @@ exports.addProduct = async (req, res, next) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
     console.log(err);
-
   }
 };
+
 // Get Status
 exports.getStatus = async (req, res, next) => {
 

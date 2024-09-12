@@ -26,52 +26,46 @@ console.log(rows);
 };
 
 exports.addPromo = async (req, res, next) => {
-  const promoData = req.body;
+  const promoData = req.body; // All other data is still received via req.body
 
-  if (!promoData) {
-    return res.status(400).json({ message: 'Promo data is required' });
+  if (!req.file || !promoData) {
+      return res.status(400).json({ message: 'All data including image file is required' });
   }
 
   const title = promoData.altDescription;
   const details = promoData.details;
   const product_id = promoData.productid;
   const status_id = promoData.status;
-  const country_id = 1;
+  const country_id = 1; // Assuming this is still hard-coded or however you handle it
   const upload_date = promoData.uploadedDate;
   const expire_date = promoData.expireDate;
-  const proimage = promoData.imageUrl;
   const promotiontype_id = promoData.promotiontypeid;
+  const image = req.file; // Path where the image is saved
+
   try {
-    // Handle the base64 image data
-    if (!proimage || !proimage.startsWith('data:image')) {
-      return res.status(400).json({ message: 'Invalid image data' });
-    }
+    const imagePath = `/uploads/promotion/${image.filename}`;
 
-    // Remove the base64 prefix and convert to buffer
-    const base64Data = proimage.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Data, 'base64');
+      // Insert the new promo into the database with the image file path
+      const [result] = await db.promise().query(
+          'INSERT INTO promotion (title, details, proimage, product_id, status_id, country_id, upload_date, promotiontype_id, expire_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [title, details, imagePath, product_id, status_id, country_id, upload_date, promotiontype_id, expire_date]
+      );
+      const promoId = result.insertId;
 
-    // Insert the new promo into the database
-    const [result] = await db.promise().query(
-      'INSERT INTO promotion (title, details, proimage, product_id, status_id, country_id, upload_date,promotiontype_id,expire_date) VALUES (?, ?, ?, ?, ?, ?, ?,?,?)',
-      [title, details, buffer, product_id, status_id, country_id, upload_date, promotiontype_id, expire_date]
-    );
-    const productId = result.insertId;
+      // Log action in stafflogs
+      await db.promise().query(
+          'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+          [`New Promo Data: ${promoId}`, req.user.id]
+      );
 
-    // Insert a log into the stafflogs table
-    await db.promise().query(
-      'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
-      [` New Promo Data : ${productId}`, req.user.id]
-    );
-
-
-
-    return res.status(200).json({ message: 'Promo added successfully' });
+      return res.status(200).json({ message: 'Promo added successfully', promoId });
   } catch (error) {
-    res.status(500).json({ error: error.message });
-    console.error(error);
+      console.error('Failed to add promo:', error);
+      console.log(error)
+      res.status(500).json({ error: error.message });
   }
 };
+
 
 exports.updatePromo = async (req, res, next) => {
   const updatePromoData = req.body;

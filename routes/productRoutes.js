@@ -2,6 +2,7 @@
 const express = require('express');
 const productController = require('../controllers/productController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const upload = require('../middlewares/productImageConfig'); 
 
 const router = express.Router();
 
@@ -22,15 +23,15 @@ router.post('/get-featuresforcat-srilanka', authMiddleware.verifyTokenforFunctio
 router.get('/get-PM-srilanka', authMiddleware.verifyTokenforFunctions, productController.getProductManagers);
 
 // For Products
-router.post('/add-product', authMiddleware.verifyTokenforStaffFunctions, productController.addProduct);
+router.post('/add-product', authMiddleware.verifyTokenforStaffFunctions,upload.single('image'), productController.addProduct);
+router.get('/get-products',authMiddleware.verifyTokenforStaffFunctions, productController.getAllProductDetails);
 
 router.get('/get-products-id',authMiddleware.verifyTokenforStaffFunctions, productController.getAllProductIdes);
 
-router.get('/get-products', authMiddleware.verifyTokenforStaffFunctions, productController.getAllProductDetails);
-router.put('/update-products', authMiddleware.verifyTokenforStaffFunctions, productController.updateProduct);
+router.put('/update-products',authMiddleware.verifyTokenforStaffFunctions, productController.updateProduct);
 router.get('/get-AllproductsforPartner-notrequested', authMiddleware.verifyTokenforPartnerFunctions, productController.getAllProductDetailsForPartnernotrequested);
 router.get('/get-AllproductsforPartner-requested', authMiddleware.verifyTokenforPartnerFunctions, productController.fetchMyProductsFunction);
-
+// get-products-id
 
 // For status
 router.get('/get-status', authMiddleware.verifyTokenforFunctions, productController.getStatus);

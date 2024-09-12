@@ -123,47 +123,40 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
-// Add Vendor
 exports.addVendor = async (req, res, next) => {
-  const vendorData = req.body;
-
-  if (!vendorData) {
-    return res.status(400).json({ message: 'vendor data is required' });
+  const { name, status } = req.body;  // Get vendor name and status from request body
+  const image = req.file;             // Get the uploaded image from Multer
+console.log(JSON.stringify(req.body))
+  // Check if all required fields are provided
+  if (!name || !status || !image) {
+    return res.status(400).json({ message: 'All fields are required (name, status, image)' });
   }
 
-  const name = vendorData.name;
-  const status_id = vendorData.status;
-  const country_id = 1;
-  const proimage = vendorData.imageUrl;
   try {
-    // Handle the base64 image data
-    if (!proimage || !proimage.startsWith('data:image')) {
-      return res.status(400).json({ message: 'Invalid image data' });
-    }
-
-    // Remove the base64 prefix and convert to buffer
-    const base64Data = proimage.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Data, 'base64');
+    // Construct the image path to store in the database (using Multer's uploaded file info)
+    const imagePath = `/uploads/vender/${image.filename}`;
 
     // Insert the new vendor into the database
     const [result] = await db.promise().query(
       'INSERT INTO vendor (name, vendorlogo, status_id, country_id) VALUES (?, ?, ?, ?)',
-      [name, buffer, status_id, country_id]
+      [name, imagePath, status, 1]  // Assuming country_id is 1 as a default value
     );
     const vendorId = result.insertId;
 
     // Insert a log into the stafflogs table
     await db.promise().query(
       'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
-      [` New vendor Added : ${vendorId}`, req.user.id]
+      [`New vendor added: ${vendorId}`, req.user.id]
     );
 
-    return res.status(200).json({ message: 'vendor added successfully' });
+    // Respond with success message
+    return res.status(200).json({ message: 'Vendor added successfully', vendorId });
   } catch (error) {
+    console.error('Failed to add vendor:', error);
     res.status(500).json({ error: error.message });
-    console.error(error);
   }
 };
+
 
 exports.updatevendor = async (req, res, next) => {
   const updatevendorData = req.body;
