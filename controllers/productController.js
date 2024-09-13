@@ -76,9 +76,12 @@ exports.updateCategory = async (req, res, next) => {
   }
 };
 
+
 // Add Feature
 exports.addFeature = async (req, res) => {
   const features = req.body;
+
+  console.log(features);
 
   if (!features) {
     return res.status(400).json({ message: 'Features are required' });
@@ -87,31 +90,46 @@ exports.addFeature = async (req, res) => {
   try {
     const results = [];
     for (let index = 0; index < features.length; index++) {
+      const featureName = features[index].name;
+      const categoryId = features[index].category;
+
+      // Check if the feature already exists for the category
+      const [existingFeature] = await db.promise().query(
+        'SELECT * FROM feature WHERE name = ? AND category_id = ?',
+        [featureName, categoryId]
+      );
+
+      if (existingFeature.length > 0) {
+        // If feature exists, skip adding and send a message
+        return res.status(404).json({message: `Feature '${featureName}' already exists For Selected Category` });
+      
+      }
 
       // Insert the new feature into the database
       const [result] = await db.promise().query(
         'INSERT INTO feature (name, category_id) VALUES (?, ?)',
-        [features[index].name, features[index].category]
+        [featureName, categoryId]
       );
 
       // Save each result
-      results.push(result);
+      results.push({ message: `Feature '${featureName}' added successfully`, status: 'added', result });
 
       // Insert a log into the stafflogs table
       await db.promise().query(
         'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
-        [`Add new feature : ${features[index].name}`, req.user.id]
+        [`Added new feature: ${featureName}`, req.user.id]
       );
     }
 
     // Return a success response with all results
-    res.status(200).json({ message: 'Features added successfully', results: results });
+    res.status(200).json({ message: 'Features processed', results });
 
   } catch (err) {
-    console.error("Error adding features:", err);
+    console.error('Error adding features:', err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Get Features to given categoryid
 exports.getFeatures = async (req, res, next) => {
