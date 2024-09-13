@@ -543,9 +543,7 @@ exports.partnerProductRequest = async (req, res, next) => {
 };
 
 
-// Fetch My Products
 exports.fetchMyProductsFunction = async (req, res, next) => {
-
   try {
     // Fetch partner's company_id using partner's user id
     const [partnerResult] = await db.promise().query(
@@ -562,16 +560,17 @@ exports.fetchMyProductsFunction = async (req, res, next) => {
 
     const companyId = partnerResult[0].company_id;
 
-    // Fetch products that have been requested by the partner's company
+    // Fetch products that have been requested by the partner's company along with the request status details
     const [requestedProducts] = await db.promise().query(
-      `SELECT pr.product_id 
+      `SELECT pr.product_id, pr.prodrequeststatus_id, prs.name as prodrequeststatus_name
        FROM productrequests pr
+       JOIN prodrequeststatus prs ON pr.prodrequeststatus_id = prs.id
        WHERE pr.company_id = ?`,
       [companyId]
     );
 
-    // Create a set of requested product IDs for easy lookup
-    const requestedProductIds = new Set(requestedProducts.map((prod) => prod.product_id));
+    // Create a map of requested product IDs to their statuses for easy lookup
+    const requestedProductStatusMap = new Map(requestedProducts.map((prod) => [prod.product_id, prod.prodrequeststatus_name]));
 
     // Fetch all products with their category, vendor, product manager, and status details
     const [products] = await db.promise().query(
@@ -580,7 +579,6 @@ exports.fetchMyProductsFunction = async (req, res, next) => {
               v.id as vendor_id, 
               v.name as vendor_name, 
               v.vendorlogo as vendor_logo, 
-              v.status_id as vendor_status, 
               pm.name as product_manager_name, 
               s.name as status_name 
        FROM product p
@@ -592,7 +590,7 @@ exports.fetchMyProductsFunction = async (req, res, next) => {
     );
 
     // Filter products that have been requested by the partner
-    const reqProducts = products.filter((product) => requestedProductIds.has(product.id));
+    const reqProducts = products.filter((product) => requestedProductStatusMap.has(product.id));
 
     // Fetch all features for all products
     const [features] = await db.promise().query(
@@ -601,7 +599,7 @@ exports.fetchMyProductsFunction = async (req, res, next) => {
        JOIN feature f ON pcf.feature_id = f.id`
     );
 
-    // Combine product details and features into a single response array
+    // Combine product details, features, and request status into a single response array
     const productsWithFeatures = reqProducts.map(product => {
       // Filter features that belong to the current product
       const productFeatures = features.filter(feature => feature.product_id === product.id);
@@ -612,25 +610,22 @@ exports.fetchMyProductsFunction = async (req, res, next) => {
         return acc;
       }, {});
 
-      // Return the product details with the features object included
+      // Return the product details with the features and request status name object included
       return {
         ...product,
-        features: featuresObj
+        features: featuresObj,
+        prodrequeststatus_name: requestedProductStatusMap.get(product.id)  // Add the request status name
       };
     });
-
-
-
 
     // Return registered product details (excluding requested ones)
     res.status(200).json(productsWithFeatures);
   } catch (err) {
     res.status(500).json({ error: err.message });
     console.log(err);
-
   }
-
 };
+
 
 
 exports.getProductsbyVendorForDeal = async (req, res, next) => {
