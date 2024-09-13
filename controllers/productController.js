@@ -20,6 +20,17 @@ exports.addCategory = async (req, res, next) => {
   }
 
   try {
+    // Check if the category already exists
+    const [existingCategory] = await db.promise().query(
+      'SELECT * FROM category WHERE name = ?',
+      [name]
+    );
+
+    if (existingCategory.length > 0) {
+      // If the category already exists, return a conflict response
+      return res.status(409).json({ message: 'Category already exists' });
+    }
+
     // Insert the new category into the database
     const [result] = await db.promise().query('INSERT INTO category (name) VALUES (?)', [name]);
 
@@ -32,9 +43,10 @@ exports.addCategory = async (req, res, next) => {
     // Return a success response
     res.status(200).json({ message: 'Category added successfully', categoryId: result.insertId });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
+
 
 exports.getCategories = async (req, res, next) => {
 
