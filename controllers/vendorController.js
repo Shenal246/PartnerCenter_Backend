@@ -126,13 +126,24 @@ exports.getProducts = async (req, res, next) => {
 exports.addVendor = async (req, res, next) => {
   const { name, status } = req.body;  // Get vendor name and status from request body
   const image = req.file;             // Get the uploaded image from Multer
-console.log(JSON.stringify(req.body))
+
   // Check if all required fields are provided
   if (!name || !status || !image) {
     return res.status(400).json({ message: 'All fields are required (name, status, image)' });
   }
 
   try {
+
+    const [existing] = await db.promise().query(
+      'SELECT name FROM vendor WHERE name = ?',
+      [name]
+    );
+
+    // If a vendor with the same name exists, respond with an error message
+    if (existing.length > 0) {
+      return res.status(409).json({ message: 'Vendor with the same name already exists' });
+    }
+
     // Construct the image path to store in the database (using Multer's uploaded file info)
     const imagePath = `/uploads/vender/${image.filename}`;
 
@@ -153,7 +164,7 @@ console.log(JSON.stringify(req.body))
     return res.status(200).json({ message: 'Vendor added successfully', vendorId });
   } catch (error) {
     console.error('Failed to add vendor:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 

@@ -51,6 +51,15 @@ const checkExistingBR = async (brNumber) => {
   return existingRecord.length > 0;
 };
 
+// Function to check if the director's email already exists in the database
+async function checkExistingDirectorEmail(email) {
+  const [result] = await db.promise().query(
+    'SELECT directoremail FROM become_a_partner WHERE directoremail = ?',
+    [email]
+  );
+  return result.length > 0;
+}
+
 exports.becomePartner = async (req, res) => {
   try {
     const data = trimAndSanitizeData(req.body);
@@ -62,6 +71,12 @@ exports.becomePartner = async (req, res) => {
     const isExisting = await checkExistingBR(data.brNumber);
     if (isExisting) {
       return res.status(210).json({ message: 'A partner with this BR number already exists.' });
+    }
+
+    // Check if the director's email is already in use
+    const isExistingDirectorEmail = await checkExistingDirectorEmail(data.directorEmail);
+    if (isExistingDirectorEmail) {
+      return res.status(409).json({ message: 'A partner with this director email already exists.' });
     }
 
     // Insert data into the database

@@ -153,68 +153,86 @@ exports.getProductManagers = async (req, res, next) => {
 exports.addProduct = async (req, res, next) => {
   const productData = req.body;
 
-  console.log(productData);
-
   if (!productData) {
     return res.status(400).json({ message: 'Product data is required' });
   }
 
-  const productname = productData.name;
-  const prodcategory = productData.category;
-  const vendorid = productData.vendor;
-  const pmid = productData.productManager;
-  const modelno = productData.modelNo;
-  const statusid = productData.status;
-  const features = productData.features;
-  const videolink = productData.videoLink;
+  const {
+    name: productname,
+    category: prodcategory,
+    vendor: vendorid,
+    productManager: pmid,
+    modelNo: modelno,
+    status: statusid,
+    features: rawFeatures,
+    videoLink: videolink
+  } = productData;
+
   const images = req.file; // This will contain the uploaded images
 
+  // Start a database transaction
+  const connection = await db.promise().getConnection();
   try {
+    await connection.beginTransaction();
+
     // Check if file is provided
     const imagePath = images ? `/uploads/product/${images.filename}` : null;
 
-    const [product] = await db.promise().query(
-      'SELECT * FROM product WHERE modelno=?',
+    // Check if product with same model number already exists
+    const [product] = await connection.query(
+      'SELECT * FROM product WHERE modelno = ?',
       [modelno]
     );
 
     if (product.length) {
+      await connection.rollback();
+      connection.release();
       return res.status(400).json({ message: 'Product Already Exists' });
     }
 
     // Insert the new product into the database
-    const [result] = await db.promise().query(
+    const [result] = await connection.query(
       'INSERT INTO product (name, image, videolink, modelno, country_id, status_id, category_id, pm_id, vendor_id) VALUES (?,?,?,?,?,?,?,?,?)',
       [productname, imagePath, videolink, modelno, 1, statusid, prodcategory, pmid, vendorid]
     );
 
     const productId = result.insertId;
 
-    // Insert features if they exist
-    const addedAllFeatures = [];
-    if (features && Object.keys(features).length > 0) {
-      for (const [featureId, value] of Object.entries(features)) {
-        const [addedfeatures] = await db.promise().query(
-          'INSERT INTO product_category_feature (product_id, feature_id, value) VALUES (?,?,?)',
-          [productId, featureId, value]
-        );
-        addedAllFeatures.push(addedfeatures);
+    // Parse and insert features
+    const features = JSON.parse(rawFeatures);
+    for (const [featureId, value] of Object.entries(features)) {
+      if (isNaN(parseInt(featureId))) {
+        console.error(`Invalid feature ID: ${featureId}`);
+        continue; // Skip invalid feature ID but do not rollback here as it's a non-critical error
       }
+
+      await connection.query(
+        'INSERT INTO product_category_feature (product_id, feature_id, value) VALUES (?,?,?)',
+        [productId, featureId, value]
+      );
     }
 
     // Insert a log into the stafflogs table
-    await db.promise().query(
+    await connection.query(
       'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
       [`New product added: ${productId}`, req.user.id]
     );
 
+    // Commit the transaction
+    await connection.commit();
+    connection.release();
+
     // Return a success response
-    res.status(200).json({ message: 'Product added successfully', newproductid: productId });
+    res.status(200).json({ message: 'Product added successfully', newProductId: productId });
   } catch (err) {
+    console.error('Failed to add product:', err);
+    await connection.rollback(); // Rollback the transaction on error
+    connection.release();
     res.status(500).json({ error: err.message });
-    console.log(err);
   }
 };
+
+
 
 // Get Status
 exports.getStatus = async (req, res, next) => {
