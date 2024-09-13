@@ -71,7 +71,7 @@ exports.updateCategory = async (req, res, next) => {
     // Return a success response
     res.status(200).json({ message: 'Category updated successfully' });
   } catch (err) {
-    console.error('Error updating category:', err);
+  
     res.status(500).json({ error: err.message });
   }
 };
@@ -81,7 +81,7 @@ exports.updateCategory = async (req, res, next) => {
 exports.addFeature = async (req, res) => {
   const features = req.body;
 
-  console.log(features);
+
 
   if (!features) {
     return res.status(400).json({ message: 'Features are required' });
