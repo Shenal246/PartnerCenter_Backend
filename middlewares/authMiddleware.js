@@ -62,8 +62,12 @@ exports.verifyTokenforPartner = async (req, res, next) => {
 
 exports.verifyTokenforStaff = async (req, res, next) => {
   // Retrieve token from the 'token' cookie
-  const token = req.cookies.token;
 
+  const token = req.cookies.token;
+  const pId = req.body.pId;
+
+  console.log(pId);
+  
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
@@ -78,11 +82,13 @@ exports.verifyTokenforStaff = async (req, res, next) => {
       [req.user.id]
     );
 
+   
+
     if (portalid.length === 0) {
       return res.status(401).json({ message: 'Invalid User' });
     }
 
-    if (!(portalid[0][0].portal_id === decoded.portalID)) {
+    if (!(portalid[0][0].portal_id === pId)) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -143,7 +149,7 @@ exports.verifyTokenforStaffFunctions = async (req, res, next) => {
       'SELECT portal_id FROM staff_user WHERE id = ?',
       [req.user.id]
     );
-
+   
     if (portalid.length === 0) {
       return res.status(401).json({ message: 'Invalid User' });
     }
