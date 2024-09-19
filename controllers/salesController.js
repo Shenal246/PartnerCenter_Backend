@@ -34,36 +34,37 @@ exports.getActivedeal = async (req, res, next) => {
     // Query to get deal registrations associated with the staff_id, including the status name
     const [rows, fields] = await db.promise().query(
       `SELECT 
-        dr.id,
-        dr.projectname,
-        dr.companyname,
-        dr.contactno,
-        dr.designation,
-        dr.email,
-        dr.closetimeline,
-        dr.budget,
-        dr.specialrequest,
-        dr.date,
-        dr.compititor,
-        cu.name AS currency_name,
-        t.name AS type_name,
-        p.name AS product_name,
-        pa.name AS partner_name,
-        c.name AS country_name,
-        ds.name AS deal_status_name,
-        v.name AS vendor_name
-       FROM 
-        dealregistration dr
-        JOIN product p ON dr.product_id = p.id
-        JOIN staff s ON p.pm_id = s.id
-        LEFT JOIN currencyunit cu ON dr.currencyunit_id = cu.id
-        LEFT JOIN type t ON dr.type_id = t.id
-        LEFT JOIN partner pa ON dr.partner_id = pa.id
-        LEFT JOIN country c ON dr.country_id = c.id
-        LEFT JOIN dealstatus ds ON dr.dealstatus_id = ds.id
-        LEFT JOIN vendor v ON dr.vendor_id = v.id
-       WHERE 
-        s.id = ?`,
+    dr.id,
+    dr.projectname,
+    dr.companyname,
+    dr.contactno,
+    dr.designation,
+    dr.email,
+    dr.reason,
+    DATE_FORMAT(dr.closetimeline, '%Y-%m-%d ') AS closetimeline,
+    dr.budget,
+    dr.specialrequest,
+    DATE_FORMAT(dr.date, '%Y-%m-%d ') AS date,
+    dr.compititor,
+    cu.name AS currency_name,
+    t.name AS type_name,
+    p.name AS product_name,
+    pa.name AS partner_name,
+    c.name AS country_name,
+    ds.name AS deal_status_name,
+    v.name AS vendor_name
+FROM 
+    dealregistration dr
+    JOIN product p ON dr.product_id = p.id
+    JOIN staff s ON p.pm_id = s.id
+    LEFT JOIN currencyunit cu ON dr.currencyunit_id = cu.id
+    LEFT JOIN type t ON dr.type_id = t.id
+    LEFT JOIN partner pa ON dr.partner_id = pa.id
+    LEFT JOIN country c ON dr.country_id = c.id
+    LEFT JOIN dealstatus ds ON dr.dealstatus_id = ds.id
+    LEFT JOIN vendor v ON dr.vendor_id = v.id
+WHERE 
+    s.id = ?`,
       [staffId]
     );
 
@@ -83,7 +84,7 @@ exports.getActiveprod = async (req, res) => {
   const id = req.headers.id;
 
   try {
-    const [rows] = await db.promise().query(`SELECT pr.id as id , com.company_name as companyname,prt.email as email,prt.mobileno as mbno ,p.id as prdid, p.name as prdname,s.name as status ,p.image as prdimage,prt.photo as ppimage,ven.id as venid ,ven.name as venname ,ven.vendorlogo as logo , s.name as status FROM productrequests pr JOIN product p on pr.product_id=p.id JOIN company com on com.id=pr.company_id JOIN partner prt on prt.company_id=com.id JOIN vendor ven on ven.id = p.vendor_id JOIN prodrequeststatus s on s.id = pr.prodrequeststatus_id join staff staf on staf.id = p.pm_id where staf.id=${id}  ORDER by id ASC`);
+    const [rows] = await db.promise().query(`SELECT pr.id as id , com.company_name as companyname,prt.email as email,prt.mobileno as mbno ,p.id as prdid, p.name as prdname,s.name as status ,p.image as prdimage,prt.photo as ppimage,ven.id as venid ,ven.name as venname ,ven.vendorlogo as logo , s.name as status FROM productrequests pr JOIN product p on pr.product_id=p.id JOIN company com on com.id=pr.company_id JOIN partner prt on prt.company_id=com.id JOIN vendor ven on ven.id = p.vendor_id JOIN prodrequeststatus s on s.id = pr.prodrequeststatus_id join staff staf on staf.id = p.pm_id where staf.id=1  ORDER by id ASC`);
 
     const vendors = rows.map(row => ({
       ...row,
@@ -245,27 +246,45 @@ exports.updateProdoreq = async (req, res) => {
 exports.updatedealoreq = async (req, res) => {
   const { id } = req.params;
   const status = req.headers.status;
-  const userid = req.headers.userid;
-
-
-  let winloststatus_id = null; // Initialize with null or default value
 
   try {
+    const [rows] = await db.promise().query(
+      'SELECT id FROM staff_user WHERE id = ?',
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ message: 'Invalid User' });
+    }
+
+    // Extract the user ID from the query result
+    const userId = rows[0].id;
+
+    let winloststatus_id = null; // Initialize with null or default value
+
     // Determine winloststatus_id based on the status value
     if (status === '2') {
+      winloststatus_id = 1;
+    } else if (status === '4') {
       winloststatus_id = 1;
     } else if (status === '3') {
       winloststatus_id = 2;
     }
 
     const [result] = await db.promise().query(
-      `UPDATE dealregistration SET pm_status=?, winloststatus_id=?,approvedby_id=? WHERE id=?;`,
-      [status, winloststatus_id, userid, id]  // Add winloststatus_id to the query parameters
+      `UPDATE dealregistration SET dealstatus_id=?, winloststatus_id=?, approvedby_id=? WHERE id=?;`,
+      [status, winloststatus_id, userId, id]  // Use userId instead of userid
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'not_found' });
     }
+
+        // Log action in stafflogs
+        await db.promise().query(
+          'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+          [`update dealregistration status: ${status}`, req.user.id]
+      );
 
     res.status(200).json({ message: 'updated successfully' });
   } catch (err) {
@@ -273,6 +292,7 @@ exports.updatedealoreq = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 //ok
 exports.addreason = async (req, res) => {
@@ -318,18 +338,25 @@ exports.addreasonprd = async (req, res) => {
 };
 //ok
 exports.addreasondll = async (req, res) => {
-
   const reason = req.headers.reason;
   const id = req.headers.id;
+
   try {
     const [result] = await db.promise().query(
-      `INSERT INTO reconsiderdll(dealregistration_id, reason) VALUES (?,?)`,
-      [id, reason]
+      `UPDATE dealregistration SET reason = ? WHERE id = ?`,
+      [reason, id]
     );
+    
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: ' not found' });
     }
+    
+      // Log action in stafflogs
+      await db.promise().query(
+        'INSERT INTO stafflogs (timestamp, action, staff_user_id) VALUES (NOW(), ?, ?)',
+        [`update dealregistration reason `, req.user.id]
+    );
 
     res.status(200).json({ message: ' updated successfully' });
   } catch (err) {
