@@ -16,6 +16,7 @@ exports.getActivepromo = async (req, res, next) => {
     // Query to get promotion requests where the pm_id (product manager ID) matches the staff_id
     const [requests] = await db.promise().query(
       `SELECT 
+      pr.id,
         p.proimage,
         prod.name AS product_name,
         p.title AS promotion_name,
@@ -24,7 +25,8 @@ exports.getActivepromo = async (req, res, next) => {
         c.company_email,
         c.company_telephone,
         prreq.name AS request_status,
-        pr.date
+        pr.date,
+        pr.note
       FROM 
         promotionrequests pr
         JOIN promotion p ON pr.promotion_id = p.id
@@ -179,8 +181,6 @@ exports.getActivepass = async (req, res) => {
   }
 };
 
-
-
 exports.getActivestatus = async (req, res) => {
   const cnt = req.headers.cnt;
 
@@ -268,6 +268,7 @@ exports.getActivevendors = async (req, res) => {
 exports.updatePromoreq = async (req, res) => {
   const { id } = req.params;
   const status = req.headers.status;
+  
   try {
     const [result] = await db.promise().query(
       `UPDATE promotionrequests SET promotionrequeststatus_id=? WHERE id=?;`,
@@ -289,6 +290,7 @@ exports.updatePromoreq = async (req, res) => {
 exports.updateProdoreq = async (req, res) => {
   const { id } = req.params;
   const status = req.headers.status;
+
   const reason=req.headers.reason
   try {
 
@@ -376,11 +378,14 @@ exports.addreason = async (req, res) => {
 
   const reason = req.headers.reason;
   const id = req.headers.id;
+
+ 
+  
   try {
     const [result] = await db.promise().query(
-      `INSERT INTO reconsider (promoreqid,reason) VALUES (?,?);`,
-      [id, reason]
-    );
+      `UPDATE promotionrequests SET note = ? WHERE id = ?`,
+      [reason, id]
+    );    
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: ' not found' });
