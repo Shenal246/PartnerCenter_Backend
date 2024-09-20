@@ -109,24 +109,58 @@ WHERE
 };
 
 
-exports.getActiveprod = async (req, res) => {
-  const id = req.headers.id;
-
+exports.getActiveprod = async (req, res, next) => {
   try {
-    const [rows] = await db.promise().query(`SELECT pr.id as id , com.company_name as companyname,prt.email as email,prt.mobileno as mbno ,p.id as prdid, p.name as prdname,s.name as status ,p.image as prdimage,prt.photo as ppimage,ven.id as venid ,ven.name as venname ,ven.vendorlogo as logo , s.name as status FROM productrequests pr JOIN product p on pr.product_id=p.id JOIN company com on com.id=pr.company_id JOIN partner prt on prt.company_id=com.id JOIN vendor ven on ven.id = p.vendor_id JOIN prodrequeststatus s on s.id = pr.prodrequeststatus_id join staff staf on staf.id = p.pm_id where staf.id=1  ORDER by id ASC`);
+    // Step 1: Query to get the staff_id from staff_user table using the user's ID
+    const [user] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, 1);
 
-    const vendors = rows.map(row => ({
-      ...row,
-      logo: row.logo ? row.logo.toString('base64') : null,
-      prdimage: row.prdimage ? row.prdimage.toString('base64') : null, // Convert the image data to base64
-    }));
+    // Step 2: Check if the user was found
+    if (user.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    res.status(200).json(vendors);
+    // Extract staff_id from the first row of the results
+    const staffId = user[0].staff_id;
+
+    // Step 3: Query to get product requests associated with the staff_id
+    const [rows] = await db.promise().query(
+      `SELECT 
+        pr.id,
+        pr.date,
+        pr.note,
+        p.name AS product_name,
+        s.name AS staff_name,
+        c.company_name,
+        c.company_email,
+        c.company_telephone,
+        v.name AS vendor_name,
+        p.image,
+        prodr.name AS request_status
+      FROM 
+        productrequests pr
+        JOIN product p ON pr.product_id = p.id
+        JOIN staff s ON p.pm_id = s.id
+        JOIN company c ON pr.company_id = c.id
+        JOIN vendor v ON p.vendor_id = v.id
+        JOIN prodrequeststatus prodr ON pr.prodrequeststatus_id = prodr.id
+      WHERE 
+        p.pm_id = ?`,
+      [staffId]
+    );
+
+    // Step 4: Check if we have results and return them
+    if (rows.length > 0) {
+      res.status(200).json(rows);
+    } else {
+      res.status(404).json({ message: "No product requests found for this user." });
+    }
   } catch (err) {
-    console.error("Error fetching :", err);
+    console.error(err); // Log the error for debugging purposes
     res.status(500).json({ error: err.message });
   }
 };
+
+
 exports.getActivepass = async (req, res) => {
   const id = req.headers.id;
 
@@ -251,14 +285,28 @@ exports.updatePromoreq = async (req, res) => {
   }
 };
 
+//now
 exports.updateProdoreq = async (req, res) => {
   const { id } = req.params;
   const status = req.headers.status;
+  const reason=req.headers.reason
   try {
-    const [result] = await db.promise().query(
-      `UPDATE productrequests SET prodrequeststatus_id=? WHERE id=?;`,
-      [status, id]
+
+    const [rows] = await db.promise().query(
+      'SELECT id FROM staff_user WHERE id = ?',
+      [req.user.id]
     );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ message: 'Invalid User' });
+    }
+
+
+    const [result] = await db.promise().query(
+      `UPDATE productrequests SET prodrequeststatus_id=?, note=? WHERE id=?;`,
+      [status, reason, id]
+    );
+    
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'not_found' });

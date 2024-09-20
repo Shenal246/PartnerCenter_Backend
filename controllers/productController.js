@@ -527,7 +527,7 @@ exports.partnerProductRequest = async (req, res, next) => {
 
     // Add a record to productrequests table
     const [result] = await db.promise().query(
-      'INSERT INTO productrequests (product_id, prodrequeststatus_id, company_id) VALUES (?, ?, ?)',
+      'INSERT INTO productrequests (product_id, prodrequeststatus_id, company_id,date) VALUES (?, ?, ?,NOW())',
       [productID, 1, companyId]
     );
 

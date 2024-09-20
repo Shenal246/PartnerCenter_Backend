@@ -27,6 +27,7 @@ console.log(rows);
 
 exports.addPromo = async (req, res, next) => {
   const promoData = req.body; // All other data is still received via req.body
+console.log(promoData);
 
   if (!req.file || !promoData) {
       return res.status(400).json({ message: 'All data including image file is required' });
