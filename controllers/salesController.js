@@ -1,24 +1,53 @@
 const db = require("../config/database");
 
-exports.getActivepromo = async (req, res) => {
-  const id = req.headers.id;
-
+exports.getActivepromo = async (req, res, next) => { 
   try {
-    const [rows] = await db.promise().query(`SELECT pr.date as pdate ,pr.id as prtid,s3.name as status, p.proimage as image_data, part.name as pname,part.email as pemail ,part.mobileno as pmobileno,p.id as pid ,p.details as pdetails,p.title as ptitle,pr.promotionrequeststatus_id as prstatus ,prod.name as prodname FROM promotionrequests pr JOIN promotion p ON pr.promotion_id = p.id JOIN product prod ON p.product_id = prod.id JOIN status s1 ON prod.status_id = s1.id JOIN company com ON pr.company_id = com.id JOIN partner part on com.id=part.company_id JOIN status s2 ON part.status_id = s2.id JOIN promotionrequeststatus s3 ON pr.promotionrequeststatus_id = s3.id JOIN status s4 ON p.status_id = s4.id join staff staf on staf.id = prod.pm_id where staf.id=${id} ORDER by pr.id;`);
+    // Retrieve staff_id from staff_user table using req.user.id
+    const [users] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, 1);
 
-    const vendors = rows.map(row => ({
-      ...row,
-      image_data: row.image_data ? row.image_data.toString('base64') : null // Convert the image data to base64
-    }));
+    // Check if the user was found
+    if (users.length === 0) {
+      return res.status(404).json({ message: "Staff user not found" });
+    }
 
-    res.status(200).json(vendors);
+    // Extract staff_id from the first row of the results
+    const staffId = users[0].staff_id;
+
+    // Query to get promotion requests where the pm_id (product manager ID) matches the staff_id
+    const [requests] = await db.promise().query(
+      `SELECT 
+        p.proimage,
+        prod.name AS product_name,
+        p.title AS promotion_name,
+        prod.name AS product_name,
+        c.company_name,
+        c.company_email,
+        c.company_telephone,
+        prreq.name AS request_status,
+        pr.date
+      FROM 
+        promotionrequests pr
+        JOIN promotion p ON pr.promotion_id = p.id
+        JOIN product prod ON p.product_id = prod.id
+        JOIN company c ON pr.company_id = c.id
+        JOIN promotionrequeststatus prreq ON pr.promotionrequeststatus_id = prreq.id
+      WHERE 
+        prod.pm_id = ?`,
+      [staffId]
+    );
+
+    // Check if we have results and return them
+    if (requests.length > 0) {
+      res.status(200).json(requests);
+    } else {
+      res.status(404).json({ message: "No promotion requests found for this staff member." });
+    }
   } catch (err) {
-    console.error("Error fetching :", err);
     res.status(500).json({ error: err.message });
   }
 };
 
-exports.getActivedeal = async (req, res, next) => {
+exports.getActivedeal = async (req, res, next) => { 
   try {
     // Query to get the staff_id from the staff_user table
     const [user] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, 1);
@@ -64,7 +93,7 @@ FROM
     LEFT JOIN dealstatus ds ON dr.dealstatus_id = ds.id
     LEFT JOIN vendor v ON dr.vendor_id = v.id
 WHERE 
-    s.id = ?`,
+    p.pm_id = ?`,
       [staffId]
     );
 
