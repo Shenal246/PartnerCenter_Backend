@@ -125,7 +125,7 @@ exports.getUserDetails = async (req, res) => {
 
         const partner_id = partnerResult[0].partner_id;
 
-        console.log("dasfg---", partner_id);
+       
 
 
         const rows = await db.promise().query(
@@ -135,7 +135,7 @@ exports.getUserDetails = async (req, res) => {
         if (rows.length === 0) {
             return res.status(404).json({ message: 'User account not found for the user.' });
         }
-        console.log(rows);
+      
 
         res.status(200).json({ rows });
     } catch (err) {

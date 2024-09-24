@@ -66,7 +66,7 @@ exports.verifyTokenforStaff = async (req, res, next) => {
   const token = req.cookies.token;
   const pId = req.body.pId;
 
-  console.log(pId);
+
   
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });

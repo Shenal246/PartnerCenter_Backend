@@ -12,6 +12,7 @@ const staffRoutes = require('./routes/staffRoutes.js');
 const vendorRoutes = require('./routes/vendorRoutes.js');
 const dealregistrationRoutes = require('./routes/dealRegistrationRoutes.js');
 const promotionRoutes = require('./routes/promotionRoutes.js');
+const marketingDashboardRoutes= require('./routes/dashboardRouters.js');
 const path = require('path');
 
 const sales = require('./routes/salesRouter.js');
@@ -61,7 +62,7 @@ app.use(staffRoutes);
 app.use(vendorRoutes);
 app.use(dealregistrationRoutes);
 app.use(promotionRoutes);
-
+app.use(marketingDashboardRoutes)
 
 
 

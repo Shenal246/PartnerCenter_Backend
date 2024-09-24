@@ -14,7 +14,7 @@ async function comparePassword(password, hashedPassword) {
 exports.login = async (req, res) => {
     const { username, password, portalID } = req.body;
 
-    console.log(req.body)
+  
     try {
         const [rows] = await db.promise().query(
             'SELECT id, password, is_password_changed, portal_id, staff_id FROM staff_user WHERE username = ?',

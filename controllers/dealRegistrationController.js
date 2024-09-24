@@ -157,7 +157,7 @@ exports.getDealRegistrations = async (req, res) => {
 
         // Execute the SQL query
         const [rows] = await db.promise().query(query, [partner_id]);
-        console.log(rows);
+       
 
 
         // Return the results as JSON

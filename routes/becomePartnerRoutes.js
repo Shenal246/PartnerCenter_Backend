@@ -10,7 +10,7 @@ router.post('/becomePartner', partnerController.uploadFiles, partnerController.b
 router.post('/becomePartnerRegister', authmiddleware.verifyTokenforStaffFunctions, companyController.registerPartnerCompany);
 
 // Get become a partner details
-router.get('/get-becomePartner', partnerController.getPartnerApplications);
+router.get('/get-becomePartner',authmiddleware.verifyTokenforStaffFunctions, partnerController.getPartnerApplications);
 
 router.post('/becomePartnerRejectApi', authmiddleware.verifyTokenforStaffFunctions, partnerController.rejectpartnerfunction);
 

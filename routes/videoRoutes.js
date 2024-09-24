@@ -8,9 +8,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
 router.get('/get-video-info-partners', authMiddleware.verifyTokenforPartnerFunctions, videoController.getVideoInfoforPartner);
 
 // Route to get video information
-router.get('/get-video-info', videoController.getVideoInfo);
-router.post('/add-video-info', videoController.addNewVideo);
-router.put('/update-video-info', videoController.updateVideo);
+router.get('/get-video-info',authMiddleware.verifyTokenforStaffFunctions, videoController.getVideoInfo);
+router.post('/add-video-info',authMiddleware.verifyTokenforStaffFunctions, videoController.addNewVideo);
+router.put('/update-video-info',authMiddleware.verifyTokenforStaffFunctions, videoController.updateVideo);
 
 // update-video
 

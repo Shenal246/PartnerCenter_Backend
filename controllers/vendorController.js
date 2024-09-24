@@ -28,7 +28,7 @@ GROUP_CONCAT(DISTINCT c.name ORDER BY c.name ASC) AS categories
 
 exports.getProductsByVendor = async (req, res, next) => {
   const vendorId = req.params.vendorId;
-  console.log("vendorID---", vendorId);
+  
 
   try {
     const query = `
