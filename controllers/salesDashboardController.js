@@ -1,5 +1,4 @@
-const db = require('../config/database');
-
+const db = require("../config/database");
 
 
 exports.getdashboardDetails = async (req, res) => {
@@ -72,22 +71,6 @@ exports.getdashboardDetails = async (req, res) => {
 
         // Return the object with the counts
         res.status(200).json(dashboardDetails);
-
-    } catch (error) {
-        // Return 500 if there's an error
-        res.status(500).json({ message: error.message });
-    }
-};
-
-exports.getpartnerRq= async (req, res) => {
-    try {
-        const [partnerRq] = await db.promise().query(`SELECT b.company_name, DATE_FORMAT(b.date, '%Y-%m-%d') AS date, s.name FROM become_a_partner b JOIN becomestatus s ON b.becomestatus_id = s.id WHERE b.becomestatus_id = 1 ORDER BY DATE LIMIT 3`);
-        
-        if (partnerRq.length === 0) {
-            return res.status(404).json({ message: 'partnerRq not found for the user.' });
-        }
-        // Return the object with the counts
-        res.status(200).json(partnerRq);
 
     } catch (error) {
         // Return 500 if there's an error

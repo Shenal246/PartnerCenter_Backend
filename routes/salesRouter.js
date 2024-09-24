@@ -17,17 +17,17 @@ router.get('/resdll', authmiddleware.verifyTokenforStaffFunctions, sales.getActi
 router.get('/status', authmiddleware.verifyTokenforStaffFunctions, sales.getActivestatus);
 router.get('/pass', authmiddleware.verifyTokenforStaffFunctions, sales.getActivepass);
 
-router.put('/status/:id',authmiddleware.verifyTokenforFunctions, sales.updatePromoreq);
+router.put('/status/:id',authmiddleware.verifyTokenforStaffFunctions, sales.updatePromoreq);
 
-router.put('/statusprd/:id',authmiddleware.verifyTokenforFunctions, sales.updateProdoreq); 
+router.put('/statusprd/:id',authmiddleware.verifyTokenforStaffFunctions, sales.updateProdoreq); 
 
 //now
-router.put('/statusdll/:id',authmiddleware.verifyTokenforFunctions, sales.updatedealoreq);
+router.put('/statusdll/:id',authmiddleware.verifyTokenforStaffFunctions, sales.updatedealoreq);
 
 
-router.post('/reason',authmiddleware.verifyTokenforFunctions, sales.addreason);
-router.post('/reasondll',authmiddleware.verifyTokenforFunctions, sales.addreasondll);
-router.post('/reasonprd',authmiddleware.verifyTokenforFunctions, sales.addreasonprd);
+router.post('/reason',authmiddleware.verifyTokenforStaffFunctions, sales.addreason);
+router.post('/reasondll',authmiddleware.verifyTokenforStaffFunctions, sales.addreasondll);
+router.post('/reasonprd',authmiddleware.verifyTokenforStaffFunctions, sales.addreasonprd);
 
 
 
