@@ -1,3 +1,4 @@
+const db = require('../config/database');
 
 // Controller function to handle staff registration
 exports.registerStaffxx = async (req, res) => {
@@ -24,7 +25,7 @@ exports.registerStaffxx = async (req, res) => {
         // Insert the new vendor into the database
         const [result] = await db.promise().query(
             'INSERT INTO staff (emp_id, name, photo,email, mobileno, designation, status_id, country_id, department_id,gender_id) VALUES (?, ?, ?, ?,?,?,?,?,?,?)',
-            [emp_id, namee, photo, email, mobileno, designation, 1, country_id, department_id, gender_id]  // Assuming country_id is 1 as a default value
+            [staffData.emp_id, staffData.namee, staffData.photo, staffData.email, staffData.mobileno, staffData.designation, 1, staffData.country_id, staffData.department_id, staffData.gender_id]  // Assuming country_id is 1 as a default value
         );
 
         // Respond to client
