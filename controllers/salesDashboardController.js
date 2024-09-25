@@ -13,60 +13,85 @@ exports.getdashboardDetails = async (req, res) => {
 
         const staff_id = staffResult[0].staff_id;
 
-        // Run all queries in parallel using Promise.all
-        const [partners, vendors, companies, products, requestStatus, username] = await Promise.all([
-            db.promise().query(`SELECT COUNT(id) AS totalPartners FROM partner WHERE status_id = 1`),
-            db.promise().query(`SELECT COUNT(id) AS totalVendors FROM vendor WHERE status_id = 1`),
-            db.promise().query(`SELECT COUNT(id) AS totalCompanies FROM company WHERE status_id = 1`),
-            db.promise().query(`SELECT COUNT(id) AS totalProducts FROM product WHERE status_id = 1`),
+      
+        const [salesdataResult,requestStatus,username,dealrequets] = await Promise.all([
+            db.promise().query(`SELECT p.modelno, p.image, COUNT(pr.id) AS request_count FROM productrequests pr JOIN product p ON p.id = pr.product_id JOIN staff s ON p.pm_id = s.id WHERE s.id=${staff_id} GROUP BY p.modelno`),
+
             // Query to get the count of partner requests grouped by their status
             db.promise().query(`
-                SELECT 
-                    becomestatus_id, 
-                    COUNT(id) AS count 
-                FROM 
-                    become_a_partner 
-                GROUP BY 
-                    becomestatus_id
-            `),
-            db.promise().query(`SELECT name AS userName FROM staff WHERE id=${staff_id} `),
+                              SELECT 
+            pr.prodrequeststatus_id, COUNT(pr.id) AS count
+            FROM 
+            productrequests pr
+            JOIN 
+            product p ON p.id = pr.product_id
+            JOIN 
+            staff s ON p.pm_id = s.id 
+            WHERE 
+             s.id = ${staff_id}  
+            GROUP BY  
+            prodrequeststatus_id  `),
+            db.promise().query(`SELECT name AS userName FROM staff WHERE id= ${staff_id} `),
+         db.promise().query(
+                `SELECT 
+    dr.companyname,
+    dr.budget,
+    ds.name AS deal_status_name,
+    DATE_FORMAT(dr.date, '%Y-%m-%d') AS date,
+     c.name AS currency
+FROM 
+    dealregistration dr
+    JOIN product p ON dr.product_id = p.id
+    JOIN staff s ON p.pm_id = s.id
+       LEFT JOIN currencyunit c ON dr.currencyunit_id = c.id
+    LEFT JOIN dealstatus ds ON dr.dealstatus_id = ds.id
+WHERE 
+    p.pm_id =  ${staff_id} AND dr.dealstatus_id=1 LIMIT 3`
+   
+              ),
         ]);
 
 
 
-
-
-        // Map the requestStatus data into readable labels (Pending, Approved, Rejected)
         const requestStatusMap = requestStatus[0].reduce((acc, row) => {
-            switch (row.becomestatus_id) {
+            switch (row.prodrequeststatus_id) {
                 case 1:
-                    acc.pending = row.count;
+                    acc.Pending = row.count;
                     break;
                 case 2:
-                    acc.approved = row.count;
+                    acc.Approved = row.count;
                     break;
                 case 3:
-                    acc.rejected = row.count;
+                    acc.Rejected = row.count;
                     break;
                 default:
-                    acc.unknown = (acc.unknown || 0) + row.count; // in case there are unknown statuses
+                    acc.Reconsider = row.count; // in case there are unknown statuses
             }
             return acc;
         }, {});
 
-        // Prepare the response object with all the counts
-        const dashboardDetails = {
-            totalPartners: partners[0][0].totalPartners,
-            totalVendors: vendors[0][0].totalVendors,
-            totalCompanies: companies[0][0].totalCompanies,
-            totalProducts: products[0][0].totalProducts,
-            partnerRequestStatus: {
-                pending: requestStatusMap.pending || 0,
-                approved: requestStatusMap.approved || 0,
-                rejected: requestStatusMap.rejected || 0,
 
+        const dashboardDetails = {
+            salesdata: salesdataResult[0].map(row => ({
+                modelno: row.modelno,
+                image: row.image,
+                request_count: row.request_count
+            })),
+            partnerRequestStatus: {
+                pending: requestStatusMap.Pending || 0,
+                approved: requestStatusMap.Approved || 0,
+                rejected: requestStatusMap.Rejected || 0,
+                reconsider: requestStatusMap.Reconsider || 0
             },
-            userName: username[0][0].userName
+            userName: username[0][0].userName,
+             // Process the dealrequets to remove buffer data and keep only necessary fields
+    dealrequetsdata: dealrequets[0].map(row => ({
+        companyname: row.companyname,
+        budget: row.budget,
+        deal_status_name: row.deal_status_name,
+        date: row.date,
+        currency:row.currency
+    }))
         };
 
         // Return the object with the counts
@@ -74,6 +99,9 @@ exports.getdashboardDetails = async (req, res) => {
 
     } catch (error) {
         // Return 500 if there's an error
+
+        console.log(error);
+        
         res.status(500).json({ message: error.message });
     }
 };
