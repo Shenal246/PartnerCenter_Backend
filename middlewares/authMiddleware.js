@@ -65,8 +65,6 @@ exports.verifyTokenforStaff = async (req, res, next) => {
 
   const token = req.cookies.token;
   const pId = req.body.pId;
-
-
   
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
@@ -81,8 +79,6 @@ exports.verifyTokenforStaff = async (req, res, next) => {
       'SELECT portal_id FROM staff_user WHERE id = ?',
       [req.user.id]
     );
-
-   
 
     if (portalid.length === 0) {
       return res.status(401).json({ message: 'Invalid User' });
@@ -163,6 +159,7 @@ exports.verifyTokenforStaffFunctions = async (req, res, next) => {
     res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
+
 exports.verifyTokenforFunctionsnew = (req, res, next) => {
   // Retrieve token from the 'token' cookie
   const token = req.cookies.token;
