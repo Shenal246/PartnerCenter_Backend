@@ -1,60 +1,68 @@
-// my-b2b-app/controllers/companyController.js
-const db = require('../config/database');
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-
 exports.staffRegister = async (req, res) => {
   const { staffId, portalId, roleId } = req.body;
 
+  const connection = await db.promise().getConnection();
   try {
+    // Start transaction
+    await connection.beginTransaction();
+
     // Fetch staff details from staff table
-    const [staffData] = await db.promise().query(`
-            SELECT * FROM staff WHERE id = ?
-        `, [staffId]);
+    const [staffData] = await connection.query(
+      `SELECT * FROM staff WHERE id = ?`, [staffId]
+    );
 
     if (staffData.length === 0) {
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ message: 'Staff not found' });
     }
 
     const staff = staffData[0];
 
-    // Check if the company with the given BR number already exists
-    const [existingStaffAccount] = await db.promise().query(`
-            SELECT id FROM staff_user WHERE staff_id = ?
-        `, [staffId]);
+    // Check if the staff user account already exists
+    const [existingStaffAccount] = await connection.query(
+      `SELECT id FROM staff_user WHERE staff_id = ?`, [staffId]
+    );
 
     if (existingStaffAccount.length > 0) {
-      return res.status(210).json({ message: 'Staff account for this User is Already exists' });
+      await connection.rollback();
+      connection.release();
+      return res.status(210).json({ message: 'Staff account for this user already exists' });
     }
 
     // Generate a random password and hash it with salt
     const plainPassword = crypto.randomBytes(8).toString('hex');
-    const hashedPassword = await bcrypt.hash(plainPassword, 10); // 10 is the salt rounds
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-    // Insert partner user data into the partner_user table
-    await db.promise().query(`
-            INSERT INTO staff_user 
-            (username, password, staff_id, portal_id, role_id)
-            VALUES (?, ?, ?, ?, ?)
-        `, [
-      staff.email, hashedPassword, staffId, portalId, roleId // Assuming portal_id and role_id are fixed values
-    ]);
+    // Insert staff user data into the staff_user table
+    await connection.query(
+      `INSERT INTO staff_user (username, password, staff_id, portal_id, role_id) VALUES (?, ?, ?, ?, ?)`,
+      [staff.email, hashedPassword, staffId, portalId, roleId]
+    );
 
+    // Update the 'is_account_created' field in the staff table
+    await connection.query(
+      `UPDATE staff SET is_account_created = 1 WHERE id = ?`, [staffId]
+    );
+
+    // Commit transaction
+    await connection.commit();
+    connection.release();
+
+    // Send confirmation email
     let transporter = nodemailer.createTransport({
-      host: "smtp-mail.outlook.com",  // Outlook SMTP server
-      port: 587,                     // SMTP port for Outlook
-      secure: false,                 // true for 465 (SSL), false for other ports like 587 (TLS)
+      host: "smtp-mail.outlook.com",
+      port: 587,
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USERNAME,  // Your Outlook email address
-        pass: process.env.EMAIL_PASSWORD      // Your Outlook password
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD
       },
       tls: {
         ciphers: 'SSLv3'
       }
     });
 
-    // Email options
     const mailOptions = {
       from: process.env.EMAIL_USERNAME,
       to: staff.email,
@@ -125,31 +133,25 @@ exports.staffRegister = async (req, res) => {
       </div>
     </body>
     </html>
-  `
+  `  // Your email HTML content
     };
 
-
-    // Sending the email
     transporter.sendMail(mailOptions, function (error, info) {
       if (error) {
         console.log(error);
-        res.status(500).json({ message: 'Error sending password email', error: error });
-      } else {
-        console.log('Email sent: ' + info.response);
-        res.status(201).json({
-          message: 'Staff Account Created successfully and password sent via email',
-          email: staff.email
-        });
+        return res.status(500).json({ message: 'Error sending password email', error: error });
       }
+      console.log('Email sent: ' + info.response);
+      return res.status(201).json({
+        message: 'Staff Account Created successfully and password sent via email',
+        email: staff.email
+      });
     });
-
   } catch (err) {
-    console.error('Error registering company, director, and partner user:', err);
-    errorHandler(err, req, res);
+    // If an error occurs, rollback all database changes
+    await connection.rollback();
+    connection.release();
+    console.error('Error registering staff:', err);
+    return res.status(500).json({ message: 'Error registering staff', error: err });
   }
-};
-
-// Error handler middleware function (basic example)
-const errorHandler = (err, req, res, next) => {
-  res.status(500).json({ message: 'Internal server error', error: err.message });
 };

@@ -49,7 +49,7 @@ exports.getAllStaffDetails = async (req, res) => {
     try {
         // Query to select all staff members
         const [staff] = await db.promise().query(
-            `SELECT st.emp_id, st.name, st.email, st.mobileno, st.designation, st.photo, s.name AS statusname, c.name AS country, g.name AS gender
+            `SELECT st.id,st.emp_id, st.name, st.email, st.mobileno, st.designation, st.photo, s.name AS statusname, c.name AS country, g.name AS gender
                 FROM staff st
                 JOIN status s ON st.status_id = s.id
                 JOIN country c ON st.country_id = c.id
