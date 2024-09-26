@@ -1,3 +1,9 @@
+// my-b2b-app/controllers/companyController.js
+const db = require('../config/database');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
 exports.staffRegister = async (req, res) => {
   const { staffId, portalId, roleId } = req.body;
 
@@ -27,7 +33,7 @@ exports.staffRegister = async (req, res) => {
     if (existingStaffAccount.length > 0) {
       await connection.rollback();
       connection.release();
-      return res.status(210).json({ message: 'Staff account for this user already exists' });
+      return res.status(409).json({ message: 'Staff account for this user already exists' });
     }
 
     // Generate a random password and hash it with salt
@@ -45,11 +51,7 @@ exports.staffRegister = async (req, res) => {
       `UPDATE staff SET is_account_created = 1 WHERE id = ?`, [staffId]
     );
 
-    // Commit transaction
-    await connection.commit();
-    connection.release();
-
-    // Send confirmation email
+    // Prepare to send confirmation email
     let transporter = nodemailer.createTransport({
       host: "smtp-mail.outlook.com",
       port: 587,
@@ -136,17 +138,20 @@ exports.staffRegister = async (req, res) => {
   `  // Your email HTML content
     };
 
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.log(error);
-        return res.status(500).json({ message: 'Error sending password email', error: error });
-      }
-      console.log('Email sent: ' + info.response);
-      return res.status(201).json({
-        message: 'Staff Account Created successfully and password sent via email',
-        email: staff.email
-      });
+    // Sending the email
+    let emailSent = await transporter.sendMail(mailOptions);
+
+    // Check email response
+    console.log('Email sent: ' + emailSent.response);
+
+    // Commit transaction after successful email
+    await connection.commit();
+    connection.release();
+    return res.status(201).json({
+      message: 'Staff Account Created successfully and password sent via email',
+      email: staff.email
     });
+
   } catch (err) {
     // If an error occurs, rollback all database changes
     await connection.rollback();
@@ -154,4 +159,11 @@ exports.staffRegister = async (req, res) => {
     console.error('Error registering staff:', err);
     return res.status(500).json({ message: 'Error registering staff', error: err });
   }
+};
+
+
+
+// Error handler middleware function (basic example)
+const errorHandler = (err, req, res, next) => {
+  res.status(500).json({ message: 'Internal server error', error: err.message });
 };
