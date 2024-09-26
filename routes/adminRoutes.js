@@ -7,7 +7,8 @@ const upload = require('../middlewares/userProfileConfig');
 
 const router = express.Router();
 
-router.post('/addStaffDetails', upload.single('photo'), adminController.registerStaffxx);
+router.post('/addStaffDetails',authmiddleware.verifyTokenforStaffFunctions, upload.single('photo'), adminController.registerStaffxx);
+router.get('/getstaffdetails',authmiddleware.verifyTokenforStaffFunctions, adminController.getAllStaffDetails);
 
 module.exports = router;
 
