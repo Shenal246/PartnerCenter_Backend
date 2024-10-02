@@ -1,9 +1,12 @@
 const db = require("../config/database");
 
+
+
+//get  promotions 
 exports.getActivepromo = async (req, res, next) => { 
   try {
     // Retrieve staff_id from staff_user table using req.user.id
-    const [users] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, 1);
+    const [users] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, [req.user.id]);
 
     // Check if the user was found
     if (users.length === 0) {
@@ -49,10 +52,12 @@ exports.getActivepromo = async (req, res, next) => {
   }
 };
 
+
+// get  deals
 exports.getActivedeal = async (req, res, next) => { 
   try {
     // Query to get the staff_id from the staff_user table
-    const [user] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, 1);
+    const [user] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, [req.user.id]);
 
     // Check if the user was found
     if (user.length === 0) {
@@ -146,8 +151,8 @@ exports.getActiveprod = async (req, res, next) => {
         JOIN vendor v ON p.vendor_id = v.id
         JOIN prodrequeststatus prodr ON pr.prodrequeststatus_id = prodr.id
       WHERE 
-        p.pm_id = ?`,
-      [staffId]
+        p.pm_id = 1`,
+     
     );
 
     // Step 4: Check if we have results and return them
@@ -163,7 +168,7 @@ exports.getActiveprod = async (req, res, next) => {
 };
 
 
-exports.getActivepass = async (req, res) => {
+exports.getActivepassword = async (req, res) => {
   const id = req.headers.id;
 
   try {
@@ -200,7 +205,7 @@ exports.getActivestatus = async (req, res) => {
 };
 
 exports.getActiveres = async (req, res) => {
-  ;
+  
 
   try {
     const [rows] = await db.promise().query(`SELECT * FROM reconsider`);
@@ -232,21 +237,21 @@ exports.getActiveresprd = async (req, res) => {
   }
 };
 
-exports.getActiveresdll = async (req, res) => {
-  try {
-    const [rows] = await db.promise().query(`SELECT * FROM reconsiderdll`);
+// exports.getActiveresdll = async (req, res) => {
+//   try {
+//     const [rows] = await db.promise().query(`SELECT * FROM reconsiderdll`);
 
-    const vendors = rows.map(row => ({
-      ...row,
-      image_data: row.image_data ? row.image_data.toString('base64') : null // Convert the image data to base64
-    }));
+//     const vendors = rows.map(row => ({
+//       ...row,
+//       image_data: row.image_data ? row.image_data.toString('base64') : null // Convert the image data to base64
+//     }));
 
-    res.status(200).json(vendors);
-  } catch (err) {
-    console.error("Error fetching :", err);
-    res.status(500).json({ error: err.message });
-  }
-};
+//     res.status(200).json(vendors);
+//   } catch (err) {
+//     console.error("Error fetching :", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// };
 
 exports.getActivevendors = async (req, res) => {
   ;
@@ -286,7 +291,7 @@ exports.updatePromoreq = async (req, res) => {
   }
 };
 
-//now
+//now weda 
 exports.updateProdoreq = async (req, res) => {
   const { id } = req.params;
   const status = req.headers.status;
@@ -305,8 +310,8 @@ exports.updateProdoreq = async (req, res) => {
 
 
     const [result] = await db.promise().query(
-      `UPDATE productrequests SET prodrequeststatus_id=?, note=? WHERE id=?;`,
-      [status, reason, id]
+      `UPDATE productrequests SET prodrequeststatus_id=?, note=? ,action_by_id=? WHERE id=?;`,
+      [status, reason,rows[0].id ,id]
     );
     
 
@@ -406,6 +411,9 @@ exports.addreasonprd = async (req, res) => {
     const [result] = await db.promise().query(
       `INSERT INTO reconsiderprd (prodreqid,reason) VALUES (?,?);`,
       [id, reason]
+
+
+      // UPDATE promotionrequests SET note = 'This is a sample note' WHERE id = 10;
     );
 
     if (result.affectedRows === 0) {
@@ -418,7 +426,7 @@ exports.addreasonprd = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-//ok
+//deal registration 
 exports.addreasondll = async (req, res) => {
   const reason = req.headers.reason;
   const id = req.headers.id;

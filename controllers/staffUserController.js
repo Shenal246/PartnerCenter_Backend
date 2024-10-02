@@ -160,3 +160,28 @@ exports.getUserDetails = async (req, res) => {
     }
   };
   
+
+
+  // Get privileges
+exports.getPrivilegesFunctionforstaff = async (req, res) => {
+    try {
+
+        const query = `
+            SELECT su.username, sr.name AS RoleName, GROUP_CONCAT(sm.name) AS Privileges
+            FROM staff_user su
+            JOIN staff_role sr ON su.role_id = sr.id
+            JOIN staff_privilege sp ON sr.id = sp.staff_role_id
+            JOIN staff_module sm ON sp.staff_module_id = sm.id
+            WHERE su.id = 6
+            GROUP BY su.username, sr.name;
+        `;
+
+        const result = await db.promise().query(query);  // db.query() should be your configured database query function
+        res.json(result[0][0]);
+    } catch (err) {
+        console.error('Error getting privileges:', err);
+        console.log(err);
+        
+        res.status(500).send('Failed to retrieve privileges');
+    }
+};
