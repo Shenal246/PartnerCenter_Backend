@@ -13,5 +13,8 @@ router.get('/getstaffdetails', authmiddleware.verifyTokenforStaffFunctions, admi
 
 router.post('/connexStaffRegister', authmiddleware.verifyTokenforStaffFunctions, staffRegisterController.staffRegister);
 
+router.get('/getstafflogs', authmiddleware.verifyTokenforStaffFunctions, adminController.getAllStafflogs);
+router.get('/getpartnerlogs', authmiddleware.verifyTokenforStaffFunctions, adminController.getAllPartnerlogs);
+
 module.exports = router;
 

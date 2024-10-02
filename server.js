@@ -54,7 +54,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true })); // Set the li
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(authRoutes);
-app.use('/api/user', userRoutes);
+app.use(userRoutes);
 app.use(productRoutes);
 app.use(partnerRoutes);
 app.use(commonRoutes);

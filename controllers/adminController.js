@@ -69,4 +69,50 @@ exports.getAllStaffDetails = async (req, res) => {
     }
 };
 
+exports.getAllStafflogs = async (req, res) => {
+    try {
+        // Query to select all staff members
+        const [stafflogs] = await db.promise().query(
+            `SELECT sl.timestamp, sl.action, s.name AS staffName, s.emp_id AS employeeID FROM 
+                stafflogs sl
+                JOIN staff_user su ON sl.staff_user_id = su.id
+                JOIN staff s ON su.staff_id = s.id
+            `
+        );
+
+        if (stafflogs.length === 0) {
+            return res.status(404).json({ message: 'No staff logs found.' });
+        }
+
+        // Responding with all staff members' details
+        res.status(200).json(stafflogs);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error retrieving all staff details' });
+    }
+};
+
+exports.getAllPartnerlogs = async (req, res) => {
+    try {
+        // Query to select all staff members
+        const [partnerlogs] = await db.promise().query(
+            `SELECT sl.timestamp, sl.action, s.name AS partnerName FROM 
+                partnerlogs sl
+                JOIN partner_user su ON sl.partner_user_id = su.id
+                JOIN partner s ON su.partner_id = s.id
+            `
+        );
+
+        if (partnerlogs.length === 0) {
+            return res.status(404).json({ message: 'No staff logs found.' });
+        }
+
+        // Responding with all staff members' details
+        res.status(200).json(partnerlogs);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error retrieving all staff details' });
+    }
+};
+
 
