@@ -6,103 +6,101 @@ const nodemailer = require('nodemailer');
 
 exports.registerPartnerCompany = async (req, res) => {
   const { id, password } = req.body;
-
   const partnerId = id;
 
   if (!partnerId || !password) {
     return res.status(400).json({ message: 'Partner ID and password are required' });
   }
 
-  try {
+  const connection = await db.promise().getConnection();
 
-    // Check password
-    const [getuser] = await db.promise().query(`
-      SELECT * FROM staff_user WHERE id = ?
-  `, [req.user.id]);
+  try {
+    // Start transaction
+    await connection.beginTransaction();
+
+    // Authenticate the user first
+    const [getuser] = await connection.query(
+      `SELECT * FROM staff_user WHERE id = ?`, [req.user.id]
+    );
 
     if (getuser.length === 0) {
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ message: 'User not found' });
     }
 
     const match = await bcrypt.compare(password, getuser[0].password);
     if (!match) {
+      await connection.rollback();
+      connection.release();
       return res.status(401).json({ message: 'Invalid username or password' });
     }
 
-
     // Fetch partner details from the become_a_partner table
-    const [partnerData] = await db.promise().query(`
-            SELECT * FROM become_a_partner WHERE id = ?
-        `, [partnerId]);
+    const [partnerData] = await connection.query(
+      `SELECT * FROM become_a_partner WHERE id = ?`, [partnerId]
+    );
 
     if (partnerData.length === 0) {
+      await connection.rollback();
+      connection.release();
       return res.status(404).json({ message: 'Partner not found' });
     }
 
     const partner = partnerData[0];
 
-    // Check if the company with the given BR number already exists
-    const [existingCompany] = await db.promise().query(`
-            SELECT id FROM company WHERE company_brno = ?
-        `, [partner.company_brno]);
+    // Check if a company with the same BR number already exists
+    const [existingCompany] = await connection.query(
+      `SELECT id FROM company WHERE company_brno = ?`, [partner.company_brno]
+    );
 
     if (existingCompany.length > 0) {
-      return res.status(210).json({ message: 'A company with this BR number already exists.' });
+      await connection.rollback();
+      connection.release();
+      return res.status(409).json({ message: 'A company with this BR number already exists.' });
     }
 
-    // Insert data into the company table
-    const [insertResult] = await db.promise().query(`
-            INSERT INTO company 
-            (company_name, company_address, company_city, company_website, company_telephone, 
-            company_email, company_whatsapp, company_brno, company_vatno, company_br, company_vat,
-            date, companycountry_id, status_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-      partner.company_name, partner.company_address, partner.company_city, partner.company_website,
-      partner.company_mobile, partner.company_email, partner.company_wtsapp, partner.company_brno,
-      partner.company_vatno, partner.company_br, partner.company_vat, new Date(), partner.companycountry_id, 1
-    ]);
+    // Insert company data
+    const [insertResult] = await connection.query(
+      `INSERT INTO company (company_name, company_address, company_city, company_website, company_telephone, company_email, company_whatsapp, company_brno, company_vatno, company_br, company_vat, date, companycountry_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [partner.company_name, partner.company_address, partner.company_city, partner.company_website, partner.company_mobile, partner.company_email, partner.company_wtsapp, partner.company_brno, partner.company_vatno, partner.company_br, partner.company_vat, new Date(), partner.companycountry_id, 1]
+    );
 
     const companyId = insertResult.insertId;
 
     // Check if a director with the given email already exists
-    const [existingDirector] = await db.promise().query(`
-            SELECT id FROM partner WHERE email = ?
-        `, [partner.directoremail]);
+    const [existingDirector] = await connection.query(
+      `SELECT id FROM partner WHERE email = ?`, [partner.directoremail]
+    );
 
     if (existingDirector.length > 0) {
-      return res.status(210).json({ message: 'A director with this email already exists.' });
+      await connection.rollback();
+      connection.release();
+      return res.status(409).json({ message: 'A director with this email already exists.' });
     }
 
-    // Insert director details into the partner table
-    const [directorResult] = await db.promise().query(`
-            INSERT INTO partner 
-            (name, email, mobileno, designation, company_id, country_id, status_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [
-      partner.directorname, partner.directoremail, partner.directormobile, 'Director',
-      companyId, partner.companycountry_id, 1
-    ]);
+    // Insert director data
+    const [directorResult] = await connection.query(
+      `INSERT INTO partner (name, email, mobileno, designation, company_id, country_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [partner.directorname, partner.directoremail, partner.directormobile, 'Director', companyId, partner.companycountry_id, 1]
+    );
 
     const directorPartnerId = directorResult.insertId;
 
-    // Generate a random password and hash it with salt
+    // Generate and hash a random password
     const plainPassword = crypto.randomBytes(8).toString('hex');
-    const hashedPassword = await bcrypt.hash(plainPassword, 10); // 10 is the salt rounds
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-    // Insert partner user data into the partner_user table
-    await db.promise().query(`
-            INSERT INTO partner_user 
-            (username, password, partner_id, portal_id, role_id)
-            VALUES (?, ?, ?, ?, ?)
-        `, [
-      partner.directoremail, hashedPassword, directorPartnerId, 1, 1 // Assuming portal_id and role_id are fixed values
-    ]);
+    // Insert partner user data
+    await connection.query(
+      `INSERT INTO partner_user (username, password, partner_id, portal_id, role_id) VALUES (?, ?, ?, ?, ?)`,
+      [partner.directoremail, hashedPassword, directorPartnerId, 1, 1]
+    );
 
-    // Change the become a partner status
-    await db.promise().query(
+    // Update become a partner status
+    await connection.query(
       'UPDATE become_a_partner SET becomestatus_id = ?, approvedby_id = ? WHERE id = ?',
-      [2 , req.user.id, partnerId]
+      [2, req.user.id, partnerId]
     );
 
     await db.promise().query(
@@ -110,20 +108,20 @@ exports.registerPartnerCompany = async (req, res) => {
       [`Registered a new partner: BR No = ${partner.company_brno}`, req.user.id]
     );
 
+    // Prepare to send confirmation email
     let transporter = nodemailer.createTransport({
-      host: "smtp-mail.outlook.com",  // Outlook SMTP server
-      port: 587,                     // SMTP port for Outlook
-      secure: false,                 // true for 465 (SSL), false for other ports like 587 (TLS)
+      host: "smtp-mail.outlook.com",
+      port: 587,
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USERNAME,  // Your Outlook email address
-        pass: process.env.EMAIL_PASSWORD      // Your Outlook password
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD
       },
       tls: {
         ciphers: 'SSLv3'
       }
     });
 
-    // Email options
     const mailOptions = {
       from: process.env.EMAIL_USERNAME,
       to: partner.directoremail,
@@ -198,24 +196,25 @@ exports.registerPartnerCompany = async (req, res) => {
   `
     };
 
-
     // Sending the email
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.log(error);
-        return res.status(500).json({ message: 'Error sending password email', error: error });
-      }
-      console.log('Email sent: ' + info.response);
-      res.status(200).json({
-        message: 'Company, director, and partner user registered successfully, password sent via email',
-      });
-    });
+    await transporter.sendMail(mailOptions);
 
+    // Commit transaction after successful email
+    await connection.commit();
+    connection.release();
+
+    res.status(200).json({
+      message: 'Company, director, and partner user registered successfully, password sent via email',
+    });
   } catch (err) {
+    // If an error occurs, rollback all database changes
+    await connection.rollback();
+    connection.release();
     console.error('Error registering company, director, and partner user:', err);
-    errorHandler(err, req, res);
+    return res.status(500).json({ message: 'Error registering company, director, and partner user', error: err });
   }
 };
+
 
 // Error handler middleware function (basic example)
 const errorHandler = (err, req, res, next) => {
