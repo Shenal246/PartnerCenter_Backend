@@ -14,7 +14,7 @@ exports.listPromo = async (req, res, next) => {
         country_id, 
          DATE_FORMAT(upload_date, '%Y-%m-%d') AS upload_date,
           DATE_FORMAT(expire_date, '%Y-%m-%d') AS expire_date 
-      FROM 
+        FROM 
         promotion
     `);
 

@@ -13,9 +13,9 @@ exports.getdashboardDetails = async (req, res) => {
 
         const staff_id = staffResult[0].staff_id;
 
-      
-        const [salesdataResult,requestStatus,username,dealrequets] = await Promise.all([
-            db.promise().query(`SELECT p.modelno, p.image, COUNT(pr.id) AS request_count FROM productrequests pr JOIN product p ON p.id = pr.product_id JOIN staff s ON p.pm_id = s.id WHERE s.id=${staff_id} GROUP BY p.modelno`),
+
+        const [salesdataResult, requestStatus, username, dealrequets] = await Promise.all([
+            db.promise().query(`SELECT p.modelno, p.image, COUNT(pr.id) AS request_count FROM productrequests pr JOIN product p ON p.id = pr.product_id JOIN staff s ON p.pm_id = s.id WHERE s.id=${staff_id} GROUP BY p.modelno ORDER BY COUNT(pr.id) DESC`),
 
             // Query to get the count of partner requests grouped by their status
             db.promise().query(`
@@ -32,7 +32,7 @@ exports.getdashboardDetails = async (req, res) => {
             GROUP BY  
             prodrequeststatus_id  `),
             db.promise().query(`SELECT name AS userName FROM staff WHERE id= ${staff_id} `),
-         db.promise().query(
+            db.promise().query(
                 `SELECT 
     dr.companyname,
     dr.budget,
@@ -47,8 +47,8 @@ FROM
     LEFT JOIN dealstatus ds ON dr.dealstatus_id = ds.id
 WHERE 
     p.pm_id =  ${staff_id} AND dr.dealstatus_id=1 LIMIT 3`
-   
-              ),
+
+            ),
         ]);
 
 
@@ -84,14 +84,14 @@ WHERE
                 reconsider: requestStatusMap.Reconsider || 0
             },
             userName: username[0][0].userName,
-             // Process the dealrequets to remove buffer data and keep only necessary fields
-    dealrequetsdata: dealrequets[0].map(row => ({
-        companyname: row.companyname,
-        budget: row.budget,
-        deal_status_name: row.deal_status_name,
-        date: row.date,
-        currency:row.currency
-    }))
+            // Process the dealrequets to remove buffer data and keep only necessary fields
+            dealrequetsdata: dealrequets[0].map(row => ({
+                companyname: row.companyname,
+                budget: row.budget,
+                deal_status_name: row.deal_status_name,
+                date: row.date,
+                currency: row.currency
+            }))
         };
 
         // Return the object with the counts
@@ -101,7 +101,7 @@ WHERE
         // Return 500 if there's an error
 
         console.log(error);
-        
+
         res.status(500).json({ message: error.message });
     }
 };

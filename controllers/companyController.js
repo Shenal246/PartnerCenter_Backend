@@ -115,7 +115,7 @@ exports.registerPartnerCompany = async (req, res) => {
       secure: false,
       auth: {
         user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
+        pass: process.env.EMAIL_PASSWORD 
       },
       tls: {
         ciphers: 'SSLv3'
