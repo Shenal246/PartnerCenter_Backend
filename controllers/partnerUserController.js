@@ -182,3 +182,25 @@ exports.getCompanymembers = async (req, res) => {
         // errorHandler(err, req, res);
     }
 };
+
+// Get privileges
+exports.getPrivilegesFunctionforpartner = async (req, res) => {
+    try {
+
+        const result = await db.promise().query(`
+            SELECT su.username, sr.name AS RoleName, GROUP_CONCAT(sm.name) AS Privileges
+            FROM partner_user su
+            JOIN partner_role sr ON su.role_id = sr.id
+            JOIN partner_privilege sp ON sr.id = sp.partner_role_id
+            JOIN partner_module sm ON sp.partner_module_id = sm.id
+            WHERE su.id = ?
+            GROUP BY su.username, sr.name;
+        `, [req.user.id]);  // db.query() should be your configured database query function
+        res.json(result[0][0]);
+    } catch (err) {
+        console.error('Error getting privileges:', err);
+        console.log(err);
+
+        res.status(500).send('Failed to retrieve privileges');
+    }
+};

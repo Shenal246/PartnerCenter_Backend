@@ -67,7 +67,7 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ id: user.id, username, portalID }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.status(200) 
+        res.status(200)
             .cookie('token', token,
                 {
                     httpOnly: true,
@@ -158,30 +158,28 @@ exports.getUserDetails = async (req, res) => {
         console.error('Error fetching user details:', err.message);
         res.status(401).json({ message: 'Unauthorized access' });
     }
-  };
-  
+};
 
 
-  // Get privileges
+
+// Get privileges
 exports.getPrivilegesFunctionforstaff = async (req, res) => {
     try {
 
-        const query = `
+        const result = await db.promise().query(`
             SELECT su.username, sr.name AS RoleName, GROUP_CONCAT(sm.name) AS Privileges
             FROM staff_user su
             JOIN staff_role sr ON su.role_id = sr.id
             JOIN staff_privilege sp ON sr.id = sp.staff_role_id
             JOIN staff_module sm ON sp.staff_module_id = sm.id
-            WHERE su.id = 6
+            WHERE su.id = ?
             GROUP BY su.username, sr.name;
-        `;
-
-        const result = await db.promise().query(query);  // db.query() should be your configured database query function
+        `, [req.user.id]);  // db.query() should be your configured database query function
         res.json(result[0][0]);
     } catch (err) {
         console.error('Error getting privileges:', err);
         console.log(err);
-        
+
         res.status(500).send('Failed to retrieve privileges');
     }
 };
