@@ -1,11 +1,12 @@
 // my-b2b-app/controllers/companyController.js
 const db = require('../config/database');
 const bcrypt = require('bcrypt');
+const { log } = require('console');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
 exports.registerPartnerCompany = async (req, res) => {
-  const { id, password } = req.body;
+  const { id, password, category} = req.body;
   const partnerId = id;
 
   if (!partnerId || !password) {
@@ -62,8 +63,8 @@ exports.registerPartnerCompany = async (req, res) => {
 
     // Insert company data
     const [insertResult] = await connection.query(
-      `INSERT INTO company (company_name, company_address, company_city, company_website, company_telephone, company_email, company_whatsapp, company_brno, company_vatno, company_br, company_vat, date, companycountry_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [partner.company_name, partner.company_address, partner.company_city, partner.company_website, partner.company_mobile, partner.company_email, partner.company_wtsapp, partner.company_brno, partner.company_vatno, partner.company_br, partner.company_vat, new Date(), partner.companycountry_id, 1]
+      `INSERT INTO company (company_name, company_address, company_city, company_website, company_telephone, company_email, company_whatsapp, company_brno, company_vatno, company_br, company_vat, date, companycountry_id, status_id,comany_category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
+      [partner.company_name, partner.company_address, partner.company_city, partner.company_website, partner.company_mobile, partner.company_email, partner.company_wtsapp, partner.company_brno, partner.company_vatno, partner.company_br, partner.company_vat, new Date(), partner.companycountry_id, 1,category]
     );
 
     const companyId = insertResult.insertId;
@@ -197,7 +198,7 @@ exports.registerPartnerCompany = async (req, res) => {
     };
 
     // Sending the email
-    await transporter.sendMail(mailOptions);
+    // await transporter.sendMail(mailOptions);
 
     // Commit transaction after successful email
     await connection.commit();
@@ -210,6 +211,8 @@ exports.registerPartnerCompany = async (req, res) => {
     // If an error occurs, rollback all database changes
     await connection.rollback();
     connection.release();
+    console.log(err);
+    
     console.error('Error registering company, director, and partner user:', err);
     return res.status(500).json({ message: 'Error registering company, director, and partner user', error: err });
   }

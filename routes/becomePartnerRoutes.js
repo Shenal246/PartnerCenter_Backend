@@ -15,8 +15,14 @@ router.get('/get-becomePartner',authmiddleware.verifyTokenforStaffFunctions, par
 router.post('/becomePartnerRejectApi', authmiddleware.verifyTokenforStaffFunctions, partnerController.rejectpartnerfunction);
 
 
-// Update become_a_partner's becomestatus_id
-// router.put('/becomepartner-update-status/:id', verifyToken, partnerController.updateStatus);
+
+//getexpertise & getindustries
+router.get('/getexpertise',authmiddleware.verifyTokenforStaffFunctions, partnerController.getExpertise);
+router.get('/getindustries',authmiddleware.verifyTokenforStaffFunctions, partnerController.getIndustries);
+
+
+// Update become_a_partner's
+router.put('/updatePartnerRqData',partnerController.uploadFiles,  partnerController.updatePartnerdata);
 
 module.exports = router;
 
