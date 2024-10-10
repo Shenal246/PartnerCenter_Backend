@@ -119,7 +119,7 @@ WHERE
 exports.getActiveprod = async (req, res, next) => {
   try {
     // Step 1: Query to get the staff_id from staff_user table using the user's ID
-    const [user] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, 1);
+    const [user] = await db.promise().query(`SELECT staff_id FROM staff_user WHERE id=?`, [req.user.id]);
 
     // Step 2: Check if the user was found
     if (user.length === 0) {
@@ -254,8 +254,7 @@ exports.getActiveresprd = async (req, res) => {
 // };
 
 exports.getActivevendors = async (req, res) => {
-  ;
-
+ 
   try {
     const [rows] = await db.promise().query(`SELECT * FROM vendor`);
 
