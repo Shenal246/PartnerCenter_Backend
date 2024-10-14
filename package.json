@@ -22,7 +22,8 @@
     "mysql2": "^3.11.0",
     "nodemailer": "^6.9.15",
     "nodemon": "^3.1.4",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "simple-oauth2": "^5.1.0"
   },
   "author": "CODEwork",
   "license": "ISC"

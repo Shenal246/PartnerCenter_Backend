@@ -17,8 +17,8 @@ router.post('/becomePartnerRejectApi', authmiddleware.verifyTokenforStaffFunctio
 
 
 //getexpertise & getindustries
-router.get('/getexpertise',authmiddleware.verifyTokenforStaffFunctions, partnerController.getExpertise);
-router.get('/getindustries',authmiddleware.verifyTokenforStaffFunctions, partnerController.getIndustries);
+router.get('/getexpertise', partnerController.getExpertise);
+router.get('/getindustries', partnerController.getIndustries);
 
 
 // Update become_a_partner's

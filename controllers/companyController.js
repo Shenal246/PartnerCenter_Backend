@@ -4,9 +4,61 @@ const bcrypt = require('bcrypt');
 const { log } = require('console');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { AuthorizationCode } = require('simple-oauth2');
+
+const oauth2Client = new AuthorizationCode({
+  client: {
+    id: '8c85fd32-5856-461f-95f4-778df292167f',
+    secret: 'aa98e47e-73a3-496b-a644-dc5af9f6f0b1',
+  },
+  auth: {
+    tokenHost: 'https://login.microsoftonline.com',
+    tokenPath: 'p2i8Q~e6OfWxVbEHWyt77hflYZQdwpdoebMjHai7/oauth2/v2.0/token',
+    authorizePath: 'p2i8Q~e6OfWxVbEHWyt77hflYZQdwpdoebMjHai7/oauth2/v2.0/authorize',
+  },
+  options: {
+    authorizationMethod: 'body'
+  },
+});
+
+
+async function getToken() {
+  try {
+    const tokenConfig = {
+      scope: 'https://outlook.office.com/SMTP.Send',
+    };
+    const result = await oauth2Client.getToken(tokenConfig.scope);
+    return result.token;
+  } catch (error) {
+    console.error('Access Token Error', error.message);
+    return null;
+  }
+}
+
+
+async function getTransporter() {
+  const accessToken = await getToken();
+  if (!accessToken) {
+    throw new Error('Failed to retrieve access token');
+  }
+
+  return nodemailer.createTransport({
+    service: 'Outlook365', // This automatically uses Outlook SMTP settings
+    auth: {
+      type: 'OAuth2',
+      user: 'partnerinfo@connexit.biz',
+      clientId: '8c85fd32-5856-461f-95f4-778df292167f',
+      clientSecret: 'aa98e47e-73a3-496b-a644-dc5af9f6f0b1',
+      //refreshToken: accessToken.refresh_token, // Handle refresh token securely
+      accessToken: accessToken.access_token,
+      expires: accessToken.expires_at.getTime(),
+    },
+  });
+}
+
 
 exports.registerPartnerCompany = async (req, res) => {
-  const { id, password, category} = req.body;
+  const { id, password, category } = req.body;
   const partnerId = id;
 
   if (!partnerId || !password) {
@@ -64,7 +116,7 @@ exports.registerPartnerCompany = async (req, res) => {
     // Insert company data
     const [insertResult] = await connection.query(
       `INSERT INTO company (company_name, company_address, company_city, company_website, company_telephone, company_email, company_whatsapp, company_brno, company_vatno, company_br, company_vat, date, companycountry_id, status_id,comany_category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
-      [partner.company_name, partner.company_address, partner.company_city, partner.company_website, partner.company_mobile, partner.company_email, partner.company_wtsapp, partner.company_brno, partner.company_vatno, partner.company_br, partner.company_vat, new Date(), partner.companycountry_id, 1,category]
+      [partner.company_name, partner.company_address, partner.company_city, partner.company_website, partner.company_mobile, partner.company_email, partner.company_wtsapp, partner.company_brno, partner.company_vatno, partner.company_br, partner.company_vat, new Date(), partner.companycountry_id, 1, category]
     );
 
     const companyId = insertResult.insertId;
@@ -109,26 +161,14 @@ exports.registerPartnerCompany = async (req, res) => {
       [`Registered a new partner: BR No = ${partner.company_brno}`, req.user.id]
     );
 
-    // Prepare to send confirmation email
-    let transporter = nodemailer.createTransport({
-      host: "smtp-mail.outlook.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD 
-      },
-      tls: {
-        ciphers: 'SSLv3'
-      }
-    });
+    const transporter = await getTransporter();
 
     const mailOptions = {
-      from: process.env.EMAIL_USERNAME,
+      from: 'partnerinfo@connexit.biz',
       to: partner.directoremail,
       subject: 'Your New Account Password for Connex Partner Center',
       html: `
-    <html>
+      <html>
     <head>
       <style>
         body {
@@ -194,11 +234,23 @@ exports.registerPartnerCompany = async (req, res) => {
       </div>
     </body>
     </html>
-  `
+      ` // Your existing HTML content
     };
 
-    // Sending the email
-    // await transporter.sendMail(mailOptions);
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log('Email sent successfully!');
+      await connection.commit();
+      connection.release();
+      res.status(200).json({
+        message: 'Company, director, and partner user registered successfully, password sent via email',
+      });
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      await connection.rollback();
+      connection.release();
+      return res.status(500).json({ message: 'Failed to send email', error: error.toString() });
+    }
 
     // Commit transaction after successful email
     await connection.commit();
@@ -212,7 +264,7 @@ exports.registerPartnerCompany = async (req, res) => {
     await connection.rollback();
     connection.release();
     console.log(err);
-    
+
     console.error('Error registering company, director, and partner user:', err);
     return res.status(500).json({ message: 'Error registering company, director, and partner user', error: err });
   }
