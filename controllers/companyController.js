@@ -8,33 +8,32 @@ const { AuthorizationCode } = require('simple-oauth2');
 
 const oauth2Client = new AuthorizationCode({
   client: {
-    id: '8c85fd32-5856-461f-95f4-778df292167f',
-    secret: 'aa98e47e-73a3-496b-a644-dc5af9f6f0b1',
+    id: process.env.CLIENT_ID,
+    secret: process.env.CLIENT_SECRET,
   },
   auth: {
     tokenHost: 'https://login.microsoftonline.com',
-    tokenPath: 'p2i8Q~e6OfWxVbEHWyt77hflYZQdwpdoebMjHai7/oauth2/v2.0/token',
-    authorizePath: 'p2i8Q~e6OfWxVbEHWyt77hflYZQdwpdoebMjHai7/oauth2/v2.0/authorize',
+    tokenPath: `${process.env.TENANT_ID}/oauth2/v2.0/token`,
+    authorizePath: `${process.env.TENANT_ID}/oauth2/v2.0/authorize`,
   },
   options: {
     authorizationMethod: 'body'
   },
 });
 
-
 async function getToken() {
   try {
     const tokenConfig = {
-      scope: 'https://outlook.office.com/SMTP.Send',
+      scope: 'https://graph.microsoft.com/.default',
     };
-    const result = await oauth2Client.getToken(tokenConfig.scope);
+    const result = await oauth2Client.getToken(tokenConfig);
     return result.token;
   } catch (error) {
     console.error('Access Token Error', error.message);
+    console.log(error.output);
     return null;
   }
 }
-
 
 async function getTransporter() {
   const accessToken = await getToken();
@@ -43,15 +42,13 @@ async function getTransporter() {
   }
 
   return nodemailer.createTransport({
-    service: 'Outlook365', // This automatically uses Outlook SMTP settings
+    service: 'Outlook365',
     auth: {
       type: 'OAuth2',
-      user: 'partnerinfo@connexit.biz',
-      clientId: '8c85fd32-5856-461f-95f4-778df292167f',
-      clientSecret: 'aa98e47e-73a3-496b-a644-dc5af9f6f0b1',
-      //refreshToken: accessToken.refresh_token, // Handle refresh token securely
+      user: process.env.EMAIL_USERNAME,
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
       accessToken: accessToken.access_token,
-      expires: accessToken.expires_at.getTime(),
     },
   });
 }
