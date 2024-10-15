@@ -485,9 +485,9 @@ exports.updatePartnerAndPrivileges = async (req, res) => {
         //       // Print type and content of modules for debugging
         //       console.log("Modules Type:", typeof modules);
         //       console.log("Modules Content:", modules);
-      
-              // Ensure modules is an array
-              let moduleIds = Array.isArray(modules) ? modules : JSON.parse(modules);
+
+        // Ensure modules is an array
+        let moduleIds = Array.isArray(modules) ? modules : JSON.parse(modules);
 
         // Start the transaction
         await connection.beginTransaction();

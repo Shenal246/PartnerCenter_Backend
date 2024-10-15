@@ -10,11 +10,9 @@ router.post('/becomePartner', partnerController.uploadFiles, partnerController.b
 router.post('/becomePartnerRegister', authmiddleware.verifyTokenforStaffFunctions, companyController.registerPartnerCompany);
 
 // Get become a partner details
-router.get('/get-becomePartner',authmiddleware.verifyTokenforStaffFunctions, partnerController.getPartnerApplications);
+router.get('/get-becomePartner', authmiddleware.verifyTokenforStaffFunctions, partnerController.getPartnerApplications);
 
 router.post('/becomePartnerRejectApi', authmiddleware.verifyTokenforStaffFunctions, partnerController.rejectpartnerfunction);
-
-
 
 //getexpertise & getindustries
 router.get('/getexpertise', partnerController.getExpertise);
@@ -22,7 +20,7 @@ router.get('/getindustries', partnerController.getIndustries);
 
 
 // Update become_a_partner's
-router.put('/updatePartnerRqData',partnerController.uploadFiles,  partnerController.updatePartnerdata);
+router.put('/updatePartnerRqData', partnerController.uploadFiles, partnerController.updatePartnerdata);
 
 module.exports = router;
 

@@ -143,8 +143,8 @@ exports.registerPartnerCompany = async (req, res) => {
 
     // Insert partner user data
     await connection.query(
-      `INSERT INTO partner_user (username, password, partner_id, portal_id, role_id) VALUES (?, ?, ?, ?, ?)`,
-      [partner.directoremail, hashedPassword, directorPartnerId, 1, 1]
+      `INSERT INTO partner_user (username, password, partner_id, portal_id) VALUES (?, ?, ?, ?)`,
+      [partner.directoremail, hashedPassword, directorPartnerId, 1]
     );
 
     // Update become a partner status
